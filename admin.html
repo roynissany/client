@@ -326,20 +326,21 @@
 
   // ── EVENTS TABLE ──────────────────────────────────────────────
   function renderEvents(events) {
-    const logins = events.filter(e => e.event === 'login').slice(0, 50);
+    const relevant = events.filter(e => e.event === 'login' || e.event === 'quote_request').slice(0, 50);
     const wrap = document.getElementById('eventsWrap');
-    if (!logins.length) { wrap.innerHTML = '<div class="empty">No login events yet.</div>'; return; }
+    if (!relevant.length) { wrap.innerHTML = '<div class="empty">No login events yet.</div>'; return; }
     wrap.innerHTML = `
       <table class="events-table">
         <thead><tr>
-          <th>Time</th><th>Code</th><th>Location</th>
+          <th>Time</th><th>Code</th><th>Event</th><th>Location</th>
           <th>Device</th><th>Duration</th><th>Scroll</th>
         </tr></thead>
         <tbody>
-          ${logins.map(e => `
-          <tr>
+          ${relevant.map(e => `
+          <tr${e.event === 'quote_request' ? ' style="background:rgba(212,175,55,0.06)"' : ''}>
             <td class="muted">${fmtDate(e.time)}</td>
             <td class="mono">${esc(e.code)}</td>
+            <td>${e.event === 'quote_request' ? '<span class="badge edit-yes" style="font-size:10px">Quote</span>' : '<span style="color:var(--muted);font-size:12px">Login</span>'}</td>
             <td class="muted">${[e.city, e.country].filter(Boolean).join(', ') || '—'}</td>
             <td class="muted">${[e.device, e.browser].filter(Boolean).join(' · ') || '—'}</td>
             <td class="muted">${e.duration ? fmtDuration(e.duration) : '—'}</td>
