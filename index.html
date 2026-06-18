@@ -562,9 +562,9 @@
     };
   }
 
-  async function trackLogin(code) {
+  // Flush previous session's exit data — runs on every page load, not gated on login method
+  (function flushPendingExit() {
     if (!SCRIPT_URL) return;
-    // Flush exit data from previous session stored during last page unload
     try {
       const pending = JSON.parse(localStorage.getItem('bpc_pending_exit') || 'null');
       if (pending && pending.sessionId) {
@@ -575,7 +575,10 @@
         localStorage.removeItem('bpc_pending_exit');
       }
     } catch(e) {}
+  })();
 
+  async function trackLogin(code) {
+    if (!SCRIPT_URL) return;
     const dev  = getDeviceInfo();
     const ref  = document.referrer || '(direct)';
     const utm  = new URLSearchParams(location.search).get('utm_source') || '';
