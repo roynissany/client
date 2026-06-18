@@ -213,6 +213,26 @@
   .img-strip img { width:100%; height:100%; object-fit:cover; object-position:center 40%; filter:brightness(0.75); }
   .img-strip-overlay { position:absolute; inset:0; background:linear-gradient(90deg, rgba(10,10,12,0.7) 0%, transparent 50%, rgba(10,10,12,0.3) 100%); }
   .img-strip-label { position:absolute; bottom:20px; left:24px; z-index:2; font-size:10px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+  /* ─── DOCS ─── */
+  .docs-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:680px) { .docs-grid { grid-template-columns:1fr; } }
+  .doc-card {
+    display:flex; align-items:center; gap:16px;
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:18px 20px; text-decoration:none; color:var(--text);
+    transition:border-color .2s, background .2s;
+  }
+  .doc-card:hover { border-color:var(--accent); background:rgba(67,126,209,0.06); }
+  .doc-card.doc-soon { opacity:0.45; cursor:default; }
+  .doc-card.doc-soon:hover { border-color:var(--line); background:var(--surface); }
+  .doc-icon { flex-shrink:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:8px; }
+  .doc-icon svg { width:18px; height:18px; color:var(--accent); }
+  .doc-soon .doc-icon svg { color:var(--muted); }
+  .doc-info { flex:1; min-width:0; }
+  .doc-title { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .doc-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+  .doc-coming { color:rgba(255,255,255,0.25); font-style:italic; }
+  .doc-arrow { font-size:16px; color:var(--muted); flex-shrink:0; }
   /* ─── CTA ─── */
   .cta-bar {
     margin-top:60px; padding:36px 40px;
@@ -369,6 +389,56 @@
       <li data-edit>Extra cleaning &amp; security staff required for 70+ attendees</li>
       <li data-edit>Noise limit is 105 dB per vehicle + daily average</li>
     </ul>
+
+    <!-- USEFUL DOCUMENTS -->
+    <div class="section-header reveal">
+      <h2>Useful Documents</h2>
+      <p>Download and review before your event.</p>
+    </div>
+    <div class="docs-grid reveal">
+
+      <a href="https://sign.balatonpark.com" target="_blank" rel="noopener" class="doc-card">
+        <div class="doc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="doc-info">
+          <div class="doc-title">Participant Waiver</div>
+          <div class="doc-meta">sign.balatonpark.com</div>
+        </div>
+        <div class="doc-arrow">↗</div>
+      </a>
+
+      <a href="#" class="doc-card doc-soon" onclick="return false;">
+        <div class="doc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="doc-info">
+          <div class="doc-title">General Terms &amp; Conditions</div>
+          <div class="doc-meta doc-coming">Coming soon</div>
+        </div>
+      </a>
+
+      <a href="#" class="doc-card doc-soon" onclick="return false;">
+        <div class="doc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="doc-info">
+          <div class="doc-title">Rules of Operation</div>
+          <div class="doc-meta doc-coming">Coming soon</div>
+        </div>
+      </a>
+
+      <a href="#" class="doc-card doc-soon" onclick="return false;">
+        <div class="doc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 21 9"/><polyline points="9 21 9 9"/></svg>
+        </div>
+        <div class="doc-info">
+          <div class="doc-title">Pit Building 1–8 Drawing</div>
+          <div class="doc-meta doc-coming">Coming soon</div>
+        </div>
+      </a>
+
+    </div>
 
     <!-- CTA -->
     <div class="cta-bar reveal">
