@@ -40,6 +40,12 @@
   .signout-btn:hover { border-color:var(--accent); color:#8dbde8; }
   .main { max-width:1100px; margin:0 auto; padding:32px; }
 
+  /* ── STATS FILTERS ── */
+  .stats-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .sf-btn { padding:6px 14px; font-size:12px; font-weight:600; letter-spacing:.06em; border-radius:20px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; transition:all .15s; }
+  .sf-btn:hover { color:var(--text); border-color:var(--line-strong); }
+  .sf-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 4px 12px var(--accent-glow); }
+
   /* ── STATS ROW ── */
   .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
   .stat-card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px 24px; }
@@ -151,6 +157,15 @@
   <div class="main">
 
     <!-- STATS -->
+    <div class="stats-filters" id="statsFilters">
+      <button class="sf-btn active" onclick="setFilter('all')"     data-f="all">All time</button>
+      <button class="sf-btn"        onclick="setFilter('ytd')"     data-f="ytd">YTD</button>
+      <button class="sf-btn"        onclick="setFilter('6mo')"     data-f="6mo">6 Months</button>
+      <button class="sf-btn"        onclick="setFilter('3mo')"     data-f="3mo">3 Months</button>
+      <button class="sf-btn"        onclick="setFilter('1mo')"     data-f="1mo">Month</button>
+      <button class="sf-btn"        onclick="setFilter('1wk')"     data-f="1wk">Week</button>
+      <button class="sf-btn"        onclick="setFilter('today')"   data-f="today">Today</button>
+    </div>
     <div class="stats" id="stats">
       <div class="stat-card"><div class="s-label">Total Logins</div><div class="s-val" id="st-logins">—</div></div>
       <div class="stat-card"><div class="s-label">Unique Codes Used</div><div class="s-val" id="st-codes">—</div></div>
@@ -272,12 +287,41 @@
     );
   }
 
+  let allEvents = [];
+  let activeFilter = 'all';
+
   function showApp(d) {
     document.getElementById('gate').style.display = 'none';
     document.getElementById('app').classList.add('active');
-    renderStats(d.events);
+    allEvents = d.events;
+    renderStats(filterEvents(allEvents));
     renderCodes(d.codes);
-    renderEvents(d.events);
+    renderEvents(allEvents);
+  }
+
+  // ── STATS FILTER ─────────────────────────────────────────────
+  function filterCutoff(key) {
+    const now = new Date();
+    if (key === 'all')   return null;
+    if (key === 'ytd')   return new Date(now.getFullYear(), 0, 1);
+    if (key === '6mo')   return new Date(now - 182 * 864e5);
+    if (key === '3mo')   return new Date(now - 91  * 864e5);
+    if (key === '1mo')   return new Date(now - 30  * 864e5);
+    if (key === '1wk')   return new Date(now - 7   * 864e5);
+    if (key === 'today') return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return null;
+  }
+
+  function filterEvents(events) {
+    const cutoff = filterCutoff(activeFilter);
+    if (!cutoff) return events;
+    return events.filter(e => e.time && new Date(e.time) >= cutoff);
+  }
+
+  function setFilter(key) {
+    activeFilter = key;
+    document.querySelectorAll('.sf-btn').forEach(b => b.classList.toggle('active', b.dataset.f === key));
+    renderStats(filterEvents(allEvents));
   }
 
   // ── STATS ────────────────────────────────────────────────────
