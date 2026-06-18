@@ -19,7 +19,7 @@
     --gold: #c9a84c;
   }
   * { box-sizing: border-box; }
-  html, body { margin:0; padding:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:'Inter', system-ui, sans-serif; -webkit-font-smoothing:antialiased; line-height:1.5; }
+  html, body { margin:0; padding:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:'Inter', system-ui, sans-serif; -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:hidden; }
   button { font-family:inherit; }
   /* ─── PARALLAX BG ─── */
   .photo-bg {
@@ -563,6 +563,18 @@
 
   async function trackLogin(code) {
     if (!SCRIPT_URL) return;
+    // Flush exit data from previous session stored during last page unload
+    try {
+      const pending = JSON.parse(localStorage.getItem('bpc_pending_exit') || 'null');
+      if (pending && pending.sessionId) {
+        new Image().src = `${SCRIPT_URL}?action=exit`
+          + `&sessionId=${encodeURIComponent(pending.sessionId)}`
+          + `&duration=${pending.duration}`
+          + `&scrollDepth=${pending.scrollDepth}`;
+        localStorage.removeItem('bpc_pending_exit');
+      }
+    } catch(e) {}
+
     const dev  = getDeviceInfo();
     const ref  = document.referrer || '(direct)';
     const utm  = new URLSearchParams(location.search).get('utm_source') || '';
@@ -591,17 +603,19 @@
 
   function trackEvent(type) {
     if (!currentCode || !SCRIPT_URL) return;
-    const url = `${SCRIPT_URL}?action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`;
-    console.log('[BPC track]', type, url);
-    new Image().src = url;
+    new Image().src = `${SCRIPT_URL}?action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`;
   }
 
+  // On page unload: save exit data to localStorage — sent on the next login (no unreliable cross-origin request during unload)
   window.addEventListener('beforeunload', () => {
-    if (!currentCode || !SCRIPT_URL) return;
+    if (!currentCode) return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
-    const url = `${SCRIPT_URL}?action=exit&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`;
-    // fetch keepalive = guaranteed delivery even after page unload, no CORS-read issue
-    try { fetch(url, { keepalive: true }); } catch(e) {}
+    try {
+      localStorage.setItem('bpc_pending_exit', JSON.stringify({
+        sessionId: SESSION_ID, code: currentCode,
+        duration, scrollDepth: maxScroll
+      }));
+    } catch(e) {}
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
