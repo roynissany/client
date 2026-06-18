@@ -202,24 +202,35 @@
   let adminKey = '';
   let editPerm = false;
 
+  // ── JSONP helper ─────────────────────────────────────────────
+  function jsonp(params, onSuccess, onError) {
+    const cbName = '_cb' + Math.random().toString(36).substr(2, 8);
+    const qs = Object.entries(params).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup(); if (onError) onError('timeout');
+    }, 10000);
+    function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); }
+    window[cbName] = function(data) { cleanup(); onSuccess(data); };
+    script.src = `${SCRIPT_URL}?${qs}&callback=${cbName}`;
+    script.onerror = () => { cleanup(); if (onError) onError('network'); };
+    document.head.appendChild(script);
+  }
+
   // ── AUTH ─────────────────────────────────────────────────────
   function login() {
     const v = document.getElementById('keyInput').value.trim();
     if (!v) return;
-    adminKey = v;
-    // Validate by fetching analytics
-    fetch(`${SCRIPT_URL}?action=analytics&key=${encodeURIComponent(v)}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.error) {
-          document.getElementById('gateErr').style.display = 'block';
-          adminKey = '';
-        } else {
-          sessionStorage.setItem(ADMIN_KEY_STORE, v);
-          showApp(d);
-        }
-      })
-      .catch(() => { document.getElementById('gateErr').style.display = 'block'; });
+    jsonp(
+      { action: 'analytics', key: v },
+      d => {
+        if (d.error) { document.getElementById('gateErr').style.display = 'block'; return; }
+        adminKey = v;
+        sessionStorage.setItem(ADMIN_KEY_STORE, v);
+        showApp(d);
+      },
+      () => { document.getElementById('gateErr').style.display = 'block'; }
+    );
   }
 
   document.getElementById('keyInput').addEventListener('keydown', e => {
@@ -242,10 +253,11 @@
 
   // ── DATA ─────────────────────────────────────────────────────
   function loadData() {
-    fetch(`${SCRIPT_URL}?action=analytics&key=${encodeURIComponent(adminKey)}`)
-      .then(r => r.json())
-      .then(d => { if (!d.error) showApp(d); })
-      .catch(console.error);
+    jsonp(
+      { action: 'analytics', key: adminKey },
+      d => { if (!d.error) showApp(d); },
+      console.error
+    );
   }
 
   function showApp(d) {
@@ -353,44 +365,31 @@
     const errEl = document.getElementById('addErr');
     if (!code) { errEl.textContent = 'Code cannot be empty.'; errEl.style.display = 'block'; return; }
     errEl.style.display = 'none';
-
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ key: adminKey, action: 'addCode', code, label, edit: editPerm })
-    })
-    .then(r => r.json())
-    .then(d => {
-      if (d.error === 'duplicate') { errEl.textContent = 'Code already exists.'; errEl.style.display = 'block'; return; }
-      if (d.error) { errEl.textContent = 'Error: ' + d.error; errEl.style.display = 'block'; return; }
-      document.getElementById('newCode').value = '';
-      document.getElementById('newLabel').value = '';
-      editPerm = false;
-      document.getElementById('editToggle').classList.remove('on');
-      document.getElementById('addForm').classList.remove('open');
-      loadData();
-    })
-    .catch(() => { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; });
+    jsonp(
+      { action: 'addCode', key: adminKey, code, label, edit: editPerm },
+      d => {
+        if (d.error === 'duplicate') { errEl.textContent = 'Code already exists.'; errEl.style.display = 'block'; return; }
+        if (d.error) { errEl.textContent = 'Error: ' + d.error; errEl.style.display = 'block'; return; }
+        document.getElementById('newCode').value = '';
+        document.getElementById('newLabel').value = '';
+        editPerm = false;
+        document.getElementById('editToggle').classList.remove('on');
+        document.getElementById('addForm').classList.remove('open');
+        loadData();
+      },
+      () => { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+    );
   }
 
   // ── TOGGLE CODE ───────────────────────────────────────────────
   function toggleCode(code) {
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ key: adminKey, action: 'toggleCode', code })
-    })
-    .then(r => r.json())
-    .then(d => { if (d.ok) loadData(); });
+    jsonp({ action: 'toggleCode', key: adminKey, code }, d => { if (d.ok) loadData(); });
   }
 
   // ── DELETE CODE ───────────────────────────────────────────────
   function deleteCode(code) {
     if (!confirm(`Delete code "${code}"? This cannot be undone.`)) return;
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ key: adminKey, action: 'deleteCode', code })
-    })
-    .then(r => r.json())
-    .then(d => { if (d.ok) loadData(); });
+    jsonp({ action: 'deleteCode', key: adminKey, code }, d => { if (d.ok) loadData(); });
   }
 
   // ── UTILS ─────────────────────────────────────────────────────
