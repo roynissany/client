@@ -588,20 +588,28 @@
     'ROYn8200':      { edit: true },
     'bpcclient2027!':{ edit: false },
   };
+  const SESSION_KEY  = 'bpc_session';
+  const SESSION_TTL  = 3 * 24 * 60 * 60 * 1000; // 3 days
 
-  function unlock() {
-    const v = document.getElementById('pwInput').value.trim();
-    const role = ACCESS_CODES[v];
-    if (!role) { document.getElementById('pwErr').style.display = 'block'; return; }
-    currentCode = v;
+  function applyLogin(code, track) {
+    const role = ACCESS_CODES[code];
+    currentCode = code;
     document.getElementById('gate').style.display = 'none';
     document.getElementById('navBtns').classList.add('active');
     document.getElementById('editBtn').style.display = role.edit ? '' : 'none';
     document.getElementById('app').classList.add('active');
     document.title = 'Balaton Park - Client Hub';
-    trackLogin(v);
+    if (track) trackLogin(code);
     initReveal();
     initTitleObserver();
+  }
+
+  function unlock() {
+    const v = document.getElementById('pwInput').value.trim();
+    const role = ACCESS_CODES[v];
+    if (!role) { document.getElementById('pwErr').style.display = 'block'; return; }
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ code: v, ts: Date.now() }));
+    applyLogin(v, true);
   }
 
   document.getElementById('pwInput').addEventListener('keydown', e => {
@@ -610,6 +618,7 @@
 
   function signOut() {
     currentCode = '';
+    localStorage.removeItem(SESSION_KEY);
     document.getElementById('app').classList.remove('active');
     document.getElementById('navBtns').classList.remove('active');
     document.getElementById('gate').style.display = 'flex';
@@ -620,6 +629,16 @@
     document.getElementById('fixedTitleText').classList.remove('visible');
     document.title = 'Balaton Park - Client Login';
   }
+
+  // ── AUTO-LOGIN ────────────────────────────────────────────────
+  (function() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (saved && ACCESS_CODES[saved.code] && (Date.now() - saved.ts) < SESSION_TTL) {
+        applyLogin(saved.code, false);
+      }
+    } catch(e) {}
+  })();
 
   // ── FIXED TITLE ───────────────────────────────────────────────
   function initTitleObserver() {
