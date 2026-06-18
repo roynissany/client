@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>BPC 2027 · Price List</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-2: #14141a;
+    --surface: #1c1c24;
+    --line: rgba(255,255,255,0.08);
+    --line-strong: rgba(255,255,255,0.16);
+    --text: #f2f2f4;
+    --muted: #aaaab8;
+    --accent: #437ed1;
+    --accent-glow: rgba(67,126,209,0.45);
+    --gold: #c9a84c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:'Inter', system-ui, sans-serif; -webkit-font-smoothing:antialiased; line-height:1.5; }
+  button { font-family:inherit; }
+  /* ─── PARALLAX BG ─── */
+  .photo-bg {
+    position:fixed; inset:-10% 0; z-index:0; pointer-events:none;
+    background-image:url('pricelist-hero.jpg');
+    background-size:cover; background-position:center 30%;
+    will-change:transform;
+    animation:drift 60s ease-in-out infinite alternate;
+  }
+  @keyframes drift {
+    from { transform:scale(1.04) translate(0,0); }
+    to   { transform:scale(1.08) translate(-1%,-0.5%); }
+  }
+  .photo-overlay {
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(67,126,209,0.12), transparent 55%),
+      linear-gradient(180deg, rgba(10,10,12,0.50) 0%, rgba(10,10,12,0.82) 50%, rgba(10,10,12,0.97) 100%);
+  }
+  .grid-bg {
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.18;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size:48px 48px;
+    mask-image:radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  /* ─── FIXED LOGO ─── */
+  .fixed-logo { position:fixed; top:20px; left:28px; z-index:60; pointer-events:none; }
+  .fixed-logo img { height:32px; width:auto; display:block; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6)); }
+  /* ─── FIXED TITLE ─── */
+  .fixed-title {
+    position:fixed; top:0; left:0; right:0; z-index:55;
+    display:flex; align-items:center; justify-content:center;
+    height:64px; pointer-events:none;
+  }
+  .fixed-title span {
+    font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700;
+    letter-spacing:0.28em; text-transform:uppercase; color:var(--muted);
+    opacity:0; transition:opacity .4s;
+  }
+  .fixed-title span.visible { opacity:1; }
+  /* ─── NAV BUTTONS (top right) ─── */
+  .nav-btns {
+    position:fixed; top:14px; right:24px; z-index:60;
+    display:none; align-items:center; gap:10px;
+  }
+  .nav-btns.active { display:flex; }
+  .signout-btn {
+    padding:7px 14px; background:transparent; border:1px solid var(--line);
+    color:var(--muted); border-radius:7px; font-size:12px; font-weight:500; cursor:pointer; transition:all .15s;
+  }
+  .signout-btn:hover { border-color:var(--accent); color:#8dbde8; }
+  .edit-toggle {
+    padding:7px 14px; background:rgba(255,255,255,0.05); border:1px solid var(--line-strong);
+    color:var(--muted); border-radius:999px; font-size:11px; font-weight:600;
+    letter-spacing:0.14em; text-transform:uppercase; cursor:pointer; transition:all .2s;
+  }
+  .edit-toggle:hover { color:var(--text); border-color:rgba(255,255,255,0.3); }
+  .edit-toggle.on { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 16px var(--accent-glow); }
+  /* ─── EDIT MODE ─── */
+  body.editing [data-edit] {
+    outline:1px dashed rgba(67,126,209,0.5); outline-offset:4px; cursor:text; border-radius:3px;
+  }
+  body.editing [data-edit]:hover { outline-color:var(--accent); }
+  body.editing [data-edit]:focus { outline:2px solid var(--accent); background:rgba(67,126,209,0.07); }
+  .edit-help {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    z-index:100; max-width:420px; width:calc(100% - 40px);
+    background:rgba(10,10,18,0.96); border:1px solid var(--accent);
+    padding:14px 18px; border-radius:10px; font-size:13px; color:var(--text);
+    display:none; box-shadow:0 20px 60px rgba(0,0,0,0.6); text-align:center;
+  }
+  body.editing .edit-help { display:block; }
+  .edit-help b { color:#8dbde8; }
+  .edit-help .copy-btn {
+    margin-top:10px; background:var(--accent); color:#fff; border:0;
+    padding:8px 18px; border-radius:6px; cursor:pointer;
+    font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  }
+  /* ─── GATE ─── */
+  .gate {
+    position:relative; z-index:1; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:40px;
+  }
+  .gate-card {
+    width:100%; max-width:460px;
+    background:linear-gradient(180deg, rgba(28,28,36,0.88) 0%, rgba(20,20,26,0.92) 100%);
+    border:1px solid var(--line); border-radius:16px; padding:44px 40px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    backdrop-filter:blur(16px);
+  }
+  .gate-card h1 { font-family:'Rajdhani',sans-serif; font-size:42px; font-weight:700; line-height:1; margin:0 0 8px; }
+  .gate-card h1 .blue { color:var(--accent); }
+  .gate-card p.lede { font-size:14px; color:var(--muted); margin:0 0 28px; }
+  .field-label { font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:var(--muted); margin-bottom:10px; }
+  .field-input {
+    width:100%; padding:13px 16px; font-size:15px; background:var(--bg-2);
+    border:1px solid var(--line); border-radius:8px; color:var(--text);
+    font-family:'JetBrains Mono',ui-monospace,monospace; letter-spacing:0.1em;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .field-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(67,126,209,0.18); }
+  .btn-primary {
+    width:100%; margin-top:18px; padding:14px; background:var(--accent); color:#fff;
+    border:none; border-radius:8px; font-weight:700; font-size:14px; letter-spacing:0.08em;
+    text-transform:uppercase; cursor:pointer; transition:transform .1s, box-shadow .15s;
+    box-shadow:0 8px 24px var(--accent-glow);
+  }
+  .btn-primary:hover { transform:translateY(-1px); }
+  .gate-err { display:none; margin-top:10px; font-size:13px; color:#ff5d4d; }
+  .gate-foot { margin-top:22px; padding-top:18px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); text-align:center; }
+  .gate-foot a { color:#8dbde8; text-decoration:none; }
+  /* ─── APP ─── */
+  .app { display:none; }
+  .app.active { display:block; }
+  /* ─── PAGE TITLE ─── */
+  .page-title-block {
+    position:relative; z-index:1;
+    padding:100px 40px 48px; max-width:1100px; margin:0 auto;
+  }
+  .page-eyebrow { font-size:11px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:#6faee8; margin-bottom:14px; }
+  .page-heading {
+    font-family:'Rajdhani',sans-serif; font-size:80px; font-weight:700; line-height:0.92;
+    margin:0; letter-spacing:-0.01em;
+  }
+  /* ─── SCROLL FADE-IN ─── */
+  .reveal {
+    opacity:0; transform:translateY(28px);
+    transition:opacity .6s ease, transform .6s ease;
+  }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+  /* ─── CONTENT ─── */
+  .content { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 40px 100px; }
+  /* ─── SECTION HEADERS ─── */
+  .section-header { margin:60px 0 28px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+  .section-header h2 { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; margin:0 0 4px; letter-spacing:0.02em; }
+  .section-header p { font-size:13px; color:var(--muted); margin:0; }
+  /* ─── TRACK ACCESS ─── */
+  .rate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media(max-width:680px) { .rate-grid { grid-template-columns:1fr; } }
+  .rate-card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:28px 28px 24px; transition:border-color .2s;
+  }
+  .rate-card:hover { border-color:var(--line-strong); }
+  .rate-card.featured { border-color:rgba(67,126,209,0.35); }
+  .rate-card .rc-label { font-size:11px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  .rate-card .rc-price { font-family:'Rajdhani',sans-serif; font-size:58px; font-weight:700; line-height:1; color:#fff; }
+  .rate-card .rc-price .currency { font-size:30px; vertical-align:top; margin-top:6px; display:inline-block; color:var(--muted); margin-right:3px; }
+  .rate-card .rc-price .unit { font-size:14px; color:var(--muted); margin-left:4px; font-family:'Inter',sans-serif; font-weight:400; }
+  .rate-includes { margin:0; padding:14px 0 0; list-style:none; display:flex; gap:20px; flex-wrap:wrap; }
+  .rate-includes li { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:7px; }
+  .rate-includes li::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--accent); opacity:0.6; flex-shrink:0; }
+  /* ─── SAFETY ─── */
+  .safety-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media(max-width:680px) { .safety-grid { grid-template-columns:1fr; } }
+  .safety-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:26px 26px 22px; transition:border-color .2s; }
+  .safety-card:hover { border-color:var(--line-strong); }
+  .safety-card .sc-label { font-size:11px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .safety-card .sc-price { font-family:'Rajdhani',sans-serif; font-size:40px; font-weight:700; line-height:1; color:#fff; margin-bottom:18px; }
+  .safety-card .sc-price .sm { font-size:16px; color:var(--muted); font-family:'Inter',sans-serif; font-weight:400; margin-left:3px; }
+  .safety-card ul { margin:0; padding:0; list-style:none; }
+  .safety-card ul li { font-size:13px; color:var(--muted); padding:5px 0; display:flex; gap:9px; border-top:1px solid var(--line); }
+  .safety-card ul li:first-child { border-top:none; }
+  .safety-card ul li::before { content:'›'; color:var(--accent); font-weight:700; flex-shrink:0; }
+  /* ─── TABLE ─── */
+  .table-wrap { background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .items-table { width:100%; border-collapse:collapse; }
+  .items-table thead tr { border-bottom:1px solid var(--line-strong); }
+  .items-table th { font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); padding:12px 16px; text-align:left; }
+  .items-table tbody tr { border-bottom:1px solid var(--line); transition:background .12s; }
+  .items-table tbody tr:hover { background:rgba(255,255,255,0.02); }
+  .items-table tbody tr:last-child { border-bottom:none; }
+  .items-table td { padding:15px 16px; font-size:14px; color:var(--text); }
+  .items-table td.price { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; color:#fff; }
+  .items-table td.note { font-size:12px; color:var(--muted); font-style:italic; }
+  .items-table td.on-request { font-size:13px; color:var(--gold); font-weight:600; letter-spacing:0.05em; }
+  .items-table .por-row td {
+    padding:20px 16px; text-align:center; border-top:1px solid var(--line-strong);
+  }
+  .por-row .por-items { font-size:12px; color:var(--muted); letter-spacing:0.04em; margin-bottom:6px; }
+  .por-row .por-label { font-size:13px; color:var(--gold); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; }
+  /* ─── NOTES ─── */
+  .notes-bullets { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:28px; padding-top:24px; border-top:1px solid var(--line); }
+  @media(max-width:600px) { .notes-bullets { grid-template-columns:1fr; } }
+  .notes-bullets li { font-size:13px; color:var(--muted); padding:6px 0; list-style:none; display:flex; gap:8px; align-items:flex-start; line-height:1.5; }
+  .notes-bullets li::before { content:'—'; color:var(--accent); font-weight:700; flex-shrink:0; margin-top:1px; }
+  /* ─── IMAGE STRIP ─── */
+  .img-strip { width:100%; height:260px; margin:60px 0 0; position:relative; border-radius:14px; overflow:hidden; }
+  .img-strip img { width:100%; height:100%; object-fit:cover; object-position:center 40%; filter:brightness(0.75); }
+  .img-strip-overlay { position:absolute; inset:0; background:linear-gradient(90deg, rgba(10,10,12,0.7) 0%, transparent 50%, rgba(10,10,12,0.3) 100%); }
+  .img-strip-label { position:absolute; bottom:20px; left:24px; z-index:2; font-size:10px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+  /* ─── CTA ─── */
+  .cta-bar {
+    margin-top:60px; padding:36px 40px;
+    background:linear-gradient(135deg, rgba(67,126,209,0.12) 0%, rgba(67,126,209,0.04) 100%);
+    border:1px solid rgba(67,126,209,0.28); border-radius:16px;
+    display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
+  }
+  .cta-bar .cta-text h3 { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; margin:0 0 4px; }
+  .cta-bar .cta-text p { font-size:13px; color:var(--muted); margin:0; }
+  .btn-cta {
+    display:inline-flex; align-items:center; gap:10px;
+    padding:16px 32px; background:var(--accent); color:#fff; text-decoration:none;
+    border-radius:10px; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase;
+    box-shadow:0 8px 32px var(--accent-glow); transition:transform .1s, box-shadow .15s; white-space:nowrap;
+  }
+  .btn-cta:hover { transform:translateY(-2px); box-shadow:0 12px 40px var(--accent-glow); }
+  .btn-cta svg { width:18px; height:18px; }
+  /* ─── FOOTER ─── */
+  .page-footer { position:relative; z-index:1; padding:28px 40px; border-top:1px solid var(--line); text-align:center; font-size:11px; color:var(--muted); letter-spacing:0.06em; }
+  .page-footer a { color:#8dbde8; text-decoration:none; }
+  @media(max-width:600px) {
+    .page-heading { font-size:52px; }
+    .page-title-block { padding:90px 20px 36px; }
+    .content { padding:0 20px 80px; }
+    .cta-bar { flex-direction:column; align-items:flex-start; }
+  }
+</style>
+</head>
+<body>
+<!-- ALWAYS VISIBLE FIXED ELEMENTS -->
+<div class="fixed-logo"><img src="bpc-white-text-logo.png" alt="Balaton Park Circuit"></div>
+<div class="fixed-title" id="fixedTitle">
+  <span id="fixedTitleText">2027 Price List</span>
+</div>
+<div class="nav-btns" id="navBtns">
+  <button class="edit-toggle" id="editBtn" onclick="toggleEdit()">EDIT</button>
+  <button class="signout-btn" onclick="signOut()">Sign out</button>
+</div>
+<div class="photo-bg"></div>
+<div class="photo-overlay"></div>
+<div class="grid-bg"></div>
+
+<!-- ══════ GATE ══════ -->
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <h1><span class="blue">2027</span> Price List</h1>
+    <p class="lede">Enter your client access code to view rates and submit a quote request.</p>
+    <div class="field-label">Access code</div>
+    <input id="pwInput" class="field-input" type="password" placeholder="••••••••••" autocomplete="off">
+    <div id="pwErr" class="gate-err">Code not recognised. Contact <a href="mailto:info@balatonparkcircuit.com" style="color:#8dbde8">info@balatonparkcircuit.com</a></div>
+    <button class="btn-primary" onclick="unlock()">ACCESS</button>
+    <div class="gate-foot">No code? <a href="mailto:info@balatonparkcircuit.com">info@balatonparkcircuit.com</a></div>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div class="app" id="app">
+
+  <div class="page-title-block">
+    <div class="page-eyebrow" data-edit>Balaton Park Circuit · Hungary</div>
+    <h1 class="page-heading" data-edit>2027<br>Price List</h1>
+  </div>
+
+  <div class="content">
+
+    <!-- TRACK ACCESS -->
+    <div class="section-header reveal">
+      <h2 data-edit>Track Access · Daily Rates</h2>
+      <p data-edit>1 April – 31 October</p>
+    </div>
+    <div class="rate-grid reveal">
+      <div class="rate-card">
+        <div class="rc-label">Weekday</div>
+        <div class="rc-price"><span class="currency">€</span><span data-edit>15,800</span><span class="unit">/ day</span></div>
+      </div>
+      <div class="rate-card featured">
+        <div class="rc-label">Saturday / Sunday</div>
+        <div class="rc-price"><span class="currency">€</span><span data-edit>18,600</span><span class="unit">/ day</span></div>
+      </div>
+    </div>
+    <ul class="rate-includes reveal">
+      <li data-edit>4 Pit Boxes Included</li>
+      <li data-edit>105 dB Noise Limit</li>
+      <li data-edit>09:00 – 17:00 Track Access (1h lunch break)</li>
+    </ul>
+
+    <!-- SAFETY -->
+    <div class="section-header reveal">
+      <h2 data-edit>Safety Packages</h2>
+      <p data-edit>Mandatory for all track activity. Further measures required for 20+ vehicles or racing activity.</p>
+    </div>
+    <div class="safety-grid reveal">
+      <div class="safety-card">
+        <div class="sc-label">Cars Safety Package</div>
+        <div class="sc-price">€<span data-edit>2,700</span><span class="sm">/ day</span></div>
+        <ul>
+          <li>Track Marshalls</li>
+          <li>Race Control &amp; LED Panels</li>
+          <li>Cars Rescue Team</li>
+          <li>Ambulance &amp; Medical Team</li>
+        </ul>
+      </div>
+      <div class="safety-card">
+        <div class="sc-label">Motorcycles Safety Package</div>
+        <div class="sc-price">€<span data-edit>5,900</span><span class="sm">/ day</span></div>
+        <ul>
+          <li>Track Marshalls</li>
+          <li>Race Control &amp; LED Panels</li>
+          <li>Motorcycles Rescue Team</li>
+          <li>Ambulance &amp; Emergency Medical Team</li>
+          <li>Medical Center</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PIT IMAGE -->
+    <div class="img-strip reveal">
+      <img src="pricelist-pitboxes.jpg" alt="Pit Boxes">
+      <div class="img-strip-overlay"></div>
+      <div class="img-strip-label">Pit Lane · Balaton Park Circuit</div>
+    </div>
+
+    <!-- ADDITIONAL ITEMS -->
+    <div class="section-header reveal">
+      <h2 data-edit>Additional Items</h2>
+      <p data-edit>All add-ons are per unit and per day unless stated otherwise.</p>
+    </div>
+    <div class="table-wrap reveal">
+      <table class="items-table">
+        <thead><tr><th>Item</th><th>Unit</th><th>Rate</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Pit Box (additional)</td><td>per unit / day</td><td class="price">€<span data-edit>150</span></td><td></td></tr>
+          <tr><td>Crane Car</td><td>per unit / day</td><td class="price">€<span data-edit>592</span></td><td class="note">Recommended</td></tr>
+          <tr><td>Timekeeping</td><td>per day</td><td class="price">€<span data-edit>1,480</span></td><td></td></tr>
+          <tr><td>Ambulance</td><td>per unit / day</td><td class="price">€<span data-edit>690</span></td><td></td></tr>
+          <tr><td>Marshal</td><td>per pax / day</td><td class="price">€<span data-edit>232</span></td><td></td></tr>
+          <tr><td>Office</td><td>per unit / day</td><td class="price">€<span data-edit>160</span></td><td></td></tr>
+          <tr><td>Off-Road Track</td><td>per day</td><td class="price">€<span data-edit>2,300</span></td><td></td></tr>
+          <tr><td>Cleaning Staff</td><td>per pax / day</td><td class="price">€<span data-edit>204</span></td><td class="note">Required for 70+ attendees</td></tr>
+          <tr><td>Hotel Rooms</td><td>—</td><td class="on-request" rowspan="6" style="vertical-align:middle; text-align:center; border-left:1px solid var(--line);">Prices on request</td><td rowspan="6"></td></tr>
+          <tr><td>Grandstand</td><td>—</td></tr>
+          <tr><td>VIP Lounge</td><td>—</td></tr>
+          <tr><td>Media Centre</td><td>—</td></tr>
+          <tr><td>Briefing Room</td><td>—</td></tr>
+          <tr><td>Podium</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- NOTES -->
+    <ul class="notes-bullets reveal">
+      <li data-edit>All prices are VAT excluded and subject to changes</li>
+      <li data-edit>Safety packages are mandatory for all track activity</li>
+      <li data-edit>Extra cleaning &amp; security staff required for 70+ attendees</li>
+      <li data-edit>Noise limit is 105 dB per vehicle + daily average</li>
+    </ul>
+
+    <!-- CTA -->
+    <div class="cta-bar reveal">
+      <div class="cta-text">
+        <h3>Ready to book?</h3>
+        <p>Submit a quote request and our team will get back to you.</p>
+      </div>
+      <a href="https://www.balatonparkcircuit.com/qrf" target="_blank" rel="noopener" class="btn-cta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Request Quote
+      </a>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    1 Balaton Park St, 8164 Balatonfőkajár, Hungary ·
+    <a href="mailto:info@balatonparkcircuit.com">info@balatonparkcircuit.com</a> ·
+    <a href="https://www.balatonparkcircuit.com" target="_blank">balatonpark.com</a> ·
+    <a href="https://www.instagram.com/balatonpark" target="_blank" rel="noopener">@balatonpark</a>
+  </div>
+</div>
+
+<!-- EDIT HELP -->
+<div class="edit-help">
+  <b>Edit mode on</b> — click any highlighted value to edit inline.<br>
+  <button class="copy-btn" onclick="copyHtml()">Copy full HTML to save</button>
+</div>
+
+<script>
+  // ── TRACKING CONFIG ──────────────────────────────────────────
+  const TRACKING_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+  const SESSION_ID    = Math.random().toString(36).substr(2, 9);
+  const SESSION_START = Date.now();
+  let   currentCode   = '';
+  let   maxScroll     = 0;
+
+  // ── PARALLAX SCROLL ──────────────────────────────────────────
+  const photoBg = document.querySelector('.photo-bg');
+  window.addEventListener('scroll', () => {
+    const offset = Math.min(window.scrollY * 0.06, 60);
+    photoBg.style.backgroundPositionY = `calc(30% + ${offset}px)`;
+    const pct = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+    if (pct > maxScroll) maxScroll = Math.min(pct, 100);
+  }, { passive: true });
+
+  function getDeviceInfo() {
+    const ua = navigator.userAgent;
+    return {
+      device:  /mobile|android|iphone|ipad/i.test(ua) ? 'Mobile' : 'Desktop',
+      os:      /windows/i.test(ua) ? 'Windows' : /mac os/i.test(ua) ? 'Mac' : /android/i.test(ua) ? 'Android' : /iphone|ipad/i.test(ua) ? 'iOS' : /linux/i.test(ua) ? 'Linux' : 'Other',
+      browser: /edg\//i.test(ua) ? 'Edge' : /chrome/i.test(ua) ? 'Chrome' : /safari/i.test(ua) ? 'Safari' : /firefox/i.test(ua) ? 'Firefox' : 'Other',
+      screen:  screen.width + 'x' + screen.height,
+      lang:    navigator.language || '',
+      tz:      Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+    };
+  }
+
+  async function trackLogin(code) {
+    if (!TRACKING_URL || TRACKING_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+    const dev  = getDeviceInfo();
+    const ref  = document.referrer || '(direct)';
+    const utm  = new URLSearchParams(location.search).get('utm_source') || '';
+    const returning = localStorage.getItem('bpc_visited') === '1';
+    localStorage.setItem('bpc_visited', '1');
+    let geo = {};
+    try { geo = await fetch('https://ipapi.co/json/').then(r => r.json()); } catch {}
+    fetch(TRACKING_URL, { method: 'POST', body: JSON.stringify({
+      sessionId: SESSION_ID, event: 'login', code,
+      ip: geo.ip||'', city: geo.city||'', region: geo.region||'',
+      country: geo.country_name||'', org: geo.org||'',
+      referrer: ref, utm, returning, ...dev
+    })});
+  }
+
+  window.addEventListener('beforeunload', () => {
+    if (!currentCode || !TRACKING_URL || TRACKING_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+    const duration = Math.round((Date.now() - SESSION_START) / 1000);
+    navigator.sendBeacon(TRACKING_URL, JSON.stringify({
+      sessionId: SESSION_ID, event: 'exit', code: currentCode,
+      duration, scrollDepth: maxScroll
+    }));
+  });
+
+  // ── AUTH ─────────────────────────────────────────────────────
+  const ACCESS_CODE = 'CLIENT2027';
+
+  function unlock() {
+    const v = document.getElementById('pwInput').value.trim().toUpperCase();
+    if (v !== ACCESS_CODE) { document.getElementById('pwErr').style.display = 'block'; return; }
+    currentCode = v;
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('navBtns').classList.add('active');
+    document.getElementById('app').classList.add('active');
+    trackLogin(v);
+    initReveal();
+    initTitleObserver();
+  }
+
+  document.getElementById('pwInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') unlock();
+  });
+
+  function signOut() {
+    currentCode = '';
+    document.getElementById('app').classList.remove('active');
+    document.getElementById('navBtns').classList.remove('active');
+    document.getElementById('gate').style.display = 'flex';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwErr').style.display = 'none';
+    if (document.body.classList.contains('editing')) toggleEdit();
+    document.getElementById('fixedTitleText').classList.remove('visible');
+  }
+
+  // ── FIXED TITLE ───────────────────────────────────────────────
+  function initTitleObserver() {
+    const heading = document.querySelector('.page-heading');
+    const titleSpan = document.getElementById('fixedTitleText');
+    if (!heading) return;
+    const obs = new IntersectionObserver(entries => {
+      titleSpan.classList.toggle('visible', !entries[0].isIntersecting);
+    }, { threshold: 0 });
+    obs.observe(heading);
+  }
+
+  // ── SCROLL REVEAL ─────────────────────────────────────────────
+  function initReveal() {
+    const els = document.querySelectorAll('.reveal');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    els.forEach(el => obs.observe(el));
+  }
+
+  // ── EDIT MODE ─────────────────────────────────────────────────
+  function toggleEdit() {
+    const on = document.body.classList.toggle('editing');
+    const btn = document.getElementById('editBtn');
+    btn.textContent = on ? 'DONE' : 'EDIT';
+    btn.classList.toggle('on', on);
+    document.querySelectorAll('[data-edit]').forEach(el => {
+      if (on) { el.setAttribute('contenteditable', 'true'); }
+      else { el.removeAttribute('contenteditable'); }
+    });
+  }
+
+  function copyHtml() {
+    const clone = document.documentElement.cloneNode(true);
+    clone.querySelectorAll('[data-edit]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelector('body').classList.remove('editing');
+    const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    navigator.clipboard.writeText(html).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => btn.textContent = 'Copy full HTML to save', 2500);
+    }).catch(() => alert('Copy failed — use view-source instead.'));
+  }
+</script>
+</body></html>
