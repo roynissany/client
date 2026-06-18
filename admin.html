@@ -370,12 +370,33 @@
       d => {
         if (d.error === 'duplicate') { errEl.textContent = 'Code already exists.'; errEl.style.display = 'block'; return; }
         if (d.error) { errEl.textContent = 'Error: ' + d.error; errEl.style.display = 'block'; return; }
+        // Optimistic: inject new row into table without full reload
+        const tbody = document.querySelector('.codes-table tbody');
+        if (tbody) {
+          const tr = document.createElement('tr');
+          tr.id = 'row-' + CSS.escape(code);
+          tr.innerHTML = `
+            <td><span class="code-pill">${esc(code)}</span></td>
+            <td>${esc(label) || '<span style="color:var(--muted)">—</span>'}</td>
+            <td><span class="badge ${editPerm ? 'edit-yes' : 'edit-no'}">${editPerm ? 'Yes' : 'No'}</span></td>
+            <td><span class="badge active">Active</span></td>
+            <td><span class="use-count">0</span></td>
+            <td><span class="last-used">—</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="row-btn" onclick="toggleCode('${esc(code)}')">Deactivate</button>
+                <button class="row-btn danger" onclick="deleteCode('${esc(code)}')">Delete</button>
+              </div>
+            </td>`;
+          tbody.appendChild(tr);
+        } else {
+          loadData(); // fallback if table doesn't exist yet
+        }
         document.getElementById('newCode').value = '';
         document.getElementById('newLabel').value = '';
         editPerm = false;
         document.getElementById('editToggle').classList.remove('on');
         document.getElementById('addForm').classList.remove('open');
-        loadData();
       },
       () => { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
     );
@@ -383,13 +404,29 @@
 
   // ── TOGGLE CODE ───────────────────────────────────────────────
   function toggleCode(code) {
-    jsonp({ action: 'toggleCode', key: adminKey, code }, d => { if (d.ok) loadData(); });
+    const row = document.getElementById('row-' + CSS.escape(code));
+    const badge = row && row.querySelector('.badge.active, .badge.inactive');
+    const btn   = row && row.querySelector('.row-btn:not(.danger)');
+    const isActive = badge && badge.classList.contains('active');
+    // Optimistic update
+    if (badge) { badge.textContent = isActive ? 'Inactive' : 'Active'; badge.className = 'badge ' + (isActive ? 'inactive' : 'active'); }
+    if (btn)   { btn.textContent = isActive ? 'Activate' : 'Deactivate'; }
+    jsonp({ action: 'toggleCode', key: adminKey, code }, d => {
+      if (!d.ok) { // revert on failure
+        if (badge) { badge.textContent = isActive ? 'Active' : 'Inactive'; badge.className = 'badge ' + (isActive ? 'active' : 'inactive'); }
+        if (btn)   { btn.textContent = isActive ? 'Deactivate' : 'Activate'; }
+      }
+    });
   }
 
   // ── DELETE CODE ───────────────────────────────────────────────
   function deleteCode(code) {
     if (!confirm(`Delete code "${code}"? This cannot be undone.`)) return;
-    jsonp({ action: 'deleteCode', key: adminKey, code }, d => { if (d.ok) loadData(); });
+    const row = document.getElementById('row-' + CSS.escape(code));
+    if (row) row.remove(); // Optimistic: remove from DOM immediately
+    jsonp({ action: 'deleteCode', key: adminKey, code }, d => {
+      if (!d.ok && row) loadData(); // revert on failure
+    });
   }
 
   // ── UTILS ─────────────────────────────────────────────────────
