@@ -560,7 +560,7 @@
   }
 
   async function trackLogin(code) {
-    if (!SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec') return;
+    if (!SCRIPT_URL) return;
     const dev  = getDeviceInfo();
     const ref  = document.referrer || '(direct)';
     const utm  = new URLSearchParams(location.search).get('utm_source') || '';
@@ -568,7 +568,7 @@
     localStorage.setItem('bpc_visited', '1');
     let geo = {};
     try { geo = await fetch('https://ipapi.co/json/').then(r => r.json()); } catch {}
-    fetch(TRACKING_URL, { method: 'POST', body: JSON.stringify({
+    fetch(TRACKING_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({
       sessionId: SESSION_ID, event: 'login', code,
       ip: geo.ip||'', city: geo.city||'', region: geo.region||'',
       country: geo.country_name||'', org: geo.org||'',
@@ -577,7 +577,7 @@
   }
 
   window.addEventListener('beforeunload', () => {
-    if (!currentCode || !SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec') return;
+    if (!currentCode || !SCRIPT_URL) return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
     navigator.sendBeacon(TRACKING_URL, JSON.stringify({
       sessionId: SESSION_ID, event: 'exit', code: currentCode,
