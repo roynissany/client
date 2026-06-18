@@ -67,7 +67,8 @@
     position:fixed; top:14px; right:24px; z-index:60;
     display:none; align-items:center; gap:10px;
   }
-  .nav-btns.active { display:flex; }
+  .nav-btns.active { display:flex; align-items:center; }
+  .client-label { font-size:12px; color:var(--muted); margin-right:10px; letter-spacing:0.04em; }
   .signout-btn {
     padding:7px 14px; background:transparent; border:1px solid var(--line);
     color:var(--muted); border-radius:7px; font-size:12px; font-weight:500; cursor:pointer; transition:all .15s;
@@ -270,6 +271,7 @@
   <span id="fixedTitleText">Client Hub</span>
 </div>
 <div class="nav-btns" id="navBtns">
+  <span class="client-label" id="clientLabel"></span>
   <button class="edit-toggle" id="editBtn" onclick="toggleEdit()">EDIT</button>
   <button class="signout-btn" onclick="signOut()">Sign out</button>
 </div>
@@ -559,21 +561,26 @@
     };
   }
 
-  async function trackLogin(code) {
+  function trackLogin(code) {
     if (!SCRIPT_URL) return;
     const dev  = getDeviceInfo();
     const ref  = document.referrer || '(direct)';
     const utm  = new URLSearchParams(location.search).get('utm_source') || '';
     const returning = localStorage.getItem('bpc_visited') === '1';
     localStorage.setItem('bpc_visited', '1');
-    let geo = {};
-    try { geo = await fetch('https://ipapi.co/json/').then(r => r.json()); } catch {}
-    fetch(TRACKING_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({
-      sessionId: SESSION_ID, event: 'login', code,
-      ip: geo.ip||'', city: geo.city||'', region: geo.region||'',
-      country: geo.country_name||'', org: geo.org||'',
-      referrer: ref, utm, returning, ...dev
-    })});
+    // Image pixel GET — most reliable cross-origin approach (no CORS, no redirect issues)
+    new Image().src = `${SCRIPT_URL}?action=login`
+      + `&sessionId=${encodeURIComponent(SESSION_ID)}`
+      + `&code=${encodeURIComponent(code)}`
+      + `&device=${encodeURIComponent(dev.device)}`
+      + `&os=${encodeURIComponent(dev.os)}`
+      + `&browser=${encodeURIComponent(dev.browser)}`
+      + `&screen=${encodeURIComponent(dev.screen)}`
+      + `&lang=${encodeURIComponent(dev.lang)}`
+      + `&tz=${encodeURIComponent(dev.tz)}`
+      + `&ref=${encodeURIComponent(ref)}`
+      + `&utm=${encodeURIComponent(utm)}`
+      + `&returning=${returning ? '1' : '0'}`;
   }
 
   function trackEvent(type) {
@@ -616,6 +623,8 @@
     document.getElementById('navBtns').classList.add('active');
     document.getElementById('editBtn').style.display = role.edit ? '' : 'none';
     document.getElementById('app').classList.add('active');
+    const label = role.label || '';
+    document.getElementById('clientLabel').textContent = label;
     document.title = 'Balaton Park - Client Hub';
     if (track) trackLogin(code);
     initReveal();
