@@ -610,16 +610,27 @@
     new Image().src = `${SCRIPT_URL}?action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`;
   }
 
-  // On page unload: save exit data to localStorage — sent on the next login (no unreliable cross-origin request during unload)
   window.addEventListener('beforeunload', () => {
     if (!currentCode) return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
+    // Save to localStorage as fallback (sent on next page load)
     try {
       localStorage.setItem('bpc_pending_exit', JSON.stringify({
         sessionId: SESSION_ID, code: currentCode,
         duration, scrollDepth: maxScroll
       }));
     } catch(e) {}
+    // Also attempt direct send via sendBeacon with form-encoded body
+    // (simple request — no CORS preflight, browser guarantees delivery on unload)
+    if (SCRIPT_URL) {
+      try {
+        const body = new URLSearchParams({
+          action: 'exit', sessionId: SESSION_ID,
+          duration, scrollDepth: maxScroll
+        }).toString();
+        navigator.sendBeacon(SCRIPT_URL, new Blob([body], { type: 'application/x-www-form-urlencoded' }));
+      } catch(e) {}
+    }
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
