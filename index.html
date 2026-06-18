@@ -531,7 +531,7 @@
 
 <script>
   // ── CONFIG ───────────────────────────────────────────────────
-  const SCRIPT_URL   = 'YOUR_APPS_SCRIPT_URL_HERE';
+  const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec';
   const TRACKING_URL = SCRIPT_URL; // same endpoint handles tracking
   const SESSION_ID    = Math.random().toString(36).substr(2, 9);
   const SESSION_START = Date.now();
@@ -560,7 +560,7 @@
   }
 
   async function trackLogin(code) {
-    if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+    if (!SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec') return;
     const dev  = getDeviceInfo();
     const ref  = document.referrer || '(direct)';
     const utm  = new URLSearchParams(location.search).get('utm_source') || '';
@@ -577,7 +577,7 @@
   }
 
   window.addEventListener('beforeunload', () => {
-    if (!currentCode || !SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+    if (!currentCode || !SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec') return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
     navigator.sendBeacon(TRACKING_URL, JSON.stringify({
       sessionId: SESSION_ID, event: 'exit', code: currentCode,
@@ -597,7 +597,7 @@
   const SESSION_TTL  = 3 * 24 * 60 * 60 * 1000; // 3 days
 
   // Fetch live codes from Apps Script (non-blocking)
-  if (SCRIPT_URL && SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE') {
+  if (SCRIPT_URL && SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec') {
     fetch(`${SCRIPT_URL}?action=codes`)
       .then(r => r.json())
       .then(d => { if (d.codes) ACCESS_CODES = d.codes; })
