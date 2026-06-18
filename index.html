@@ -196,7 +196,7 @@
   .items-table tbody tr:last-child { border-bottom:none; }
   .items-table td { padding:15px 16px; font-size:14px; color:var(--text); }
   .items-table td.price { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; color:#fff; }
-  .items-table td.note { font-size:12px; color:var(--muted); font-style:italic; }
+  .items-table .row-note { display:block; font-size:11px; color:var(--muted); font-style:italic; margin-top:3px; }
   .items-table td.on-request { font-size:13px; color:var(--gold); font-weight:600; letter-spacing:0.05em; }
   .items-table .por-row td {
     padding:20px 16px; text-align:center; border-top:1px solid var(--line-strong);
@@ -260,8 +260,6 @@
     .cta-bar { flex-direction:column; align-items:flex-start; }
     .items-table th:nth-child(2),
     .items-table td:nth-child(2) { display:none; }
-    .items-table td.note { display:block; padding:0 16px 12px; margin-top:-8px; border:none; }
-    .items-table tr:has(.note) td:first-child { padding-bottom:2px; }
   }
 </style>
 </head>
@@ -366,17 +364,17 @@
     </div>
     <div class="table-wrap reveal">
       <table class="items-table">
-        <thead><tr><th>Item</th><th>Unit</th><th>Rate</th><th></th></tr></thead>
+        <thead><tr><th>Item</th><th>Unit</th><th>Rate</th></tr></thead>
         <tbody>
-          <tr><td>Pit Box (additional)</td><td>per unit / day</td><td class="price">€<span data-edit>150</span></td><td></td></tr>
-          <tr><td>Crane Car</td><td>per unit / day</td><td class="price">€<span data-edit>592</span></td><td class="note">Recommended</td></tr>
-          <tr><td>Timekeeping</td><td>per day</td><td class="price">€<span data-edit>1,480</span></td><td></td></tr>
-          <tr><td>Ambulance</td><td>per unit / day</td><td class="price">€<span data-edit>690</span></td><td></td></tr>
-          <tr><td>Marshal</td><td>per pax / day</td><td class="price">€<span data-edit>232</span></td><td></td></tr>
-          <tr><td>Office</td><td>per unit / day</td><td class="price">€<span data-edit>160</span></td><td></td></tr>
-          <tr><td>Off-Road Track</td><td>per day</td><td class="price">€<span data-edit>2,300</span></td><td></td></tr>
-          <tr><td>Cleaning Staff</td><td>per pax / day</td><td class="price">€<span data-edit>204</span></td><td class="note">Required for 70+ attendees</td></tr>
-          <tr><td>Hotel Rooms</td><td>—</td><td class="on-request" rowspan="6" style="vertical-align:middle; text-align:center; border-left:1px solid var(--line);">Prices on request</td><td rowspan="6"></td></tr>
+          <tr><td>Pit Box (additional)</td><td>per unit / day</td><td class="price">€<span data-edit>150</span></td></tr>
+          <tr><td>Crane Car<span class="row-note">Recommended</span></td><td>per unit / day</td><td class="price">€<span data-edit>592</span></td></tr>
+          <tr><td>Timekeeping</td><td>per day</td><td class="price">€<span data-edit>1,480</span></td></tr>
+          <tr><td>Ambulance</td><td>per unit / day</td><td class="price">€<span data-edit>690</span></td></tr>
+          <tr><td>Marshal</td><td>per pax / day</td><td class="price">€<span data-edit>232</span></td></tr>
+          <tr><td>Office<span class="row-note">6 available</span></td><td>per unit / day</td><td class="price">€<span data-edit>160</span></td></tr>
+          <tr><td>Off-Road Track</td><td>per day</td><td class="price">€<span data-edit>2,300</span></td></tr>
+          <tr><td>Cleaning Staff<span class="row-note">Required for 70+ attendees</span></td><td>per pax / day</td><td class="price">€<span data-edit>204</span></td></tr>
+          <tr><td>Hotel Rooms</td><td>—</td><td class="on-request" rowspan="6" style="vertical-align:middle; text-align:center; border-left:1px solid var(--line);">Prices on request</td></tr>
           <tr><td>Grandstand</td><td>—</td></tr>
           <tr><td>VIP Lounge</td><td>—</td></tr>
           <tr><td>Media Centre</td><td>—</td></tr>
