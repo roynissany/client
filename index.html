@@ -585,14 +585,17 @@
 
   function trackEvent(type) {
     if (!currentCode || !SCRIPT_URL) return;
-    new Image().src = `${SCRIPT_URL}?action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`;
+    const url = `${SCRIPT_URL}?action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`;
+    console.log('[BPC track]', type, url);
+    new Image().src = url;
   }
 
   window.addEventListener('beforeunload', () => {
     if (!currentCode || !SCRIPT_URL) return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
-    // Image pixel GET — works cross-origin even on page unload (no CORS issue)
-    new Image().src = `${SCRIPT_URL}?action=exit&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`;
+    const url = `${SCRIPT_URL}?action=exit&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`;
+    // fetch keepalive = guaranteed delivery even after page unload, no CORS-read issue
+    try { fetch(url, { keepalive: true }); } catch(e) {}
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
@@ -609,7 +612,16 @@
   // Fetch live codes from Apps Script via JSONP (non-blocking, no CORS issues)
   (function() {
     const cb = '_bpccb' + Math.random().toString(36).substr(2,6);
-    window[cb] = function(d) { if (d.codes) ACCESS_CODES = d.codes; delete window[cb]; };
+    window[cb] = function(d) {
+      if (d.codes) {
+        ACCESS_CODES = d.codes;
+        // If user is already logged in (auto-login fired before JSONP returned), update label now
+        if (currentCode && d.codes[currentCode]) {
+          document.getElementById('clientLabel').textContent = d.codes[currentCode].label || '';
+        }
+      }
+      delete window[cb];
+    };
     const s = document.createElement('script');
     s.src = `${SCRIPT_URL}?action=codes&callback=${cb}`;
     s.onerror = function() { delete window[cb]; };
