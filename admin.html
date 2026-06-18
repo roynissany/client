@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Balaton Park - Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c; --bg-2: #14141a; --surface: #1c1c24;
+    --line: rgba(255,255,255,0.08); --line-strong: rgba(255,255,255,0.16);
+    --text: #f2f2f4; --muted: #aaaab8;
+    --accent: #437ed1; --accent-glow: rgba(67,126,209,0.45);
+    --gold: #c9a84c; --green: #3ecf8e; --red: #ff5d4d;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; padding:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  button { font-family:inherit; cursor:pointer; }
+
+  /* ── GATE ── */
+  .gate { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px; }
+  .gate-card { width:100%; max-width:420px; background:linear-gradient(180deg,rgba(28,28,36,.9) 0%,rgba(20,20,26,.95) 100%); border:1px solid var(--line); border-radius:16px; padding:40px; backdrop-filter:blur(16px); }
+  .gate-card h1 { font-family:'Rajdhani',sans-serif; font-size:36px; font-weight:700; margin:0 0 6px; }
+  .gate-card h1 span { color:var(--accent); }
+  .gate-card p { font-size:13px; color:var(--muted); margin:0 0 24px; }
+  .field-label { font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); margin-bottom:8px; }
+  .field-input { width:100%; padding:12px 14px; font-size:14px; background:var(--bg-2); border:1px solid var(--line); border-radius:8px; color:var(--text); font-family:'JetBrains Mono',monospace; letter-spacing:.1em; transition:border-color .15s; }
+  .field-input:focus { outline:none; border-color:var(--accent); }
+  .btn-primary { width:100%; margin-top:16px; padding:13px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:14px; letter-spacing:.08em; text-transform:uppercase; transition:opacity .15s; }
+  .btn-primary:hover { opacity:.9; }
+  .gate-err { display:none; margin-top:8px; font-size:13px; color:var(--red); }
+
+  /* ── LAYOUT ── */
+  .app { display:none; }
+  .app.active { display:block; }
+  .topbar { position:sticky; top:0; z-index:50; background:rgba(10,10,12,.92); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); padding:0 32px; height:56px; display:flex; align-items:center; justify-content:space-between; }
+  .topbar-title { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; letter-spacing:.06em; }
+  .topbar-title span { color:var(--accent); }
+  .signout-btn { padding:6px 14px; background:transparent; border:1px solid var(--line); color:var(--muted); border-radius:6px; font-size:12px; transition:all .15s; }
+  .signout-btn:hover { border-color:var(--accent); color:#8dbde8; }
+  .main { max-width:1100px; margin:0 auto; padding:32px; }
+
+  /* ── STATS ROW ── */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+  .stat-card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px 24px; }
+  .stat-card .s-label { font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .stat-card .s-val { font-family:'Rajdhani',sans-serif; font-size:40px; font-weight:700; line-height:1; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom:40px; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .section-header h2 { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; margin:0; }
+  .btn-sm { padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; border:none; transition:all .15s; }
+  .btn-accent { background:var(--accent); color:#fff; box-shadow:0 4px 16px var(--accent-glow); }
+  .btn-accent:hover { opacity:.9; }
+  .btn-ghost { background:rgba(255,255,255,.06); color:var(--muted); border:1px solid var(--line); }
+  .btn-ghost:hover { color:var(--text); border-color:var(--line-strong); }
+
+  /* ── ADD CODE FORM ── */
+  .add-form { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:20px; display:none; }
+  .add-form.open { display:block; }
+  .form-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group label { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); }
+  .form-input { padding:10px 12px; font-size:13px; background:var(--bg-2); border:1px solid var(--line); border-radius:7px; color:var(--text); font-family:'JetBrains Mono',monospace; width:160px; }
+  .form-input:focus { outline:none; border-color:var(--accent); }
+  .form-input.wide { width:220px; }
+  .toggle-wrap { display:flex; align-items:center; gap:8px; padding-bottom:2px; }
+  .toggle-wrap label { font-size:12px; color:var(--muted); margin:0; letter-spacing:0; text-transform:none; }
+  .toggle { width:36px; height:20px; background:var(--line-strong); border-radius:10px; position:relative; cursor:pointer; transition:background .2s; border:none; flex-shrink:0; }
+  .toggle.on { background:var(--accent); }
+  .toggle::after { content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; background:#fff; border-radius:50%; transition:transform .2s; }
+  .toggle.on::after { transform:translateX(16px); }
+
+  /* ── CODES TABLE ── */
+  .codes-table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .codes-table thead tr { border-bottom:1px solid var(--line-strong); }
+  .codes-table th { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); padding:11px 16px; text-align:left; }
+  .codes-table tbody tr { border-bottom:1px solid var(--line); transition:background .1s; }
+  .codes-table tbody tr:last-child { border-bottom:none; }
+  .codes-table tbody tr:hover { background:rgba(255,255,255,.02); }
+  .codes-table td { padding:13px 16px; font-size:13px; }
+  .code-pill { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; background:rgba(67,126,209,.12); color:#8dbde8; padding:3px 10px; border-radius:6px; letter-spacing:.06em; }
+  .badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; letter-spacing:.06em; text-transform:uppercase; }
+  .badge.active { background:rgba(62,207,142,.12); color:var(--green); }
+  .badge.inactive { background:rgba(255,255,255,.06); color:var(--muted); }
+  .badge.edit-yes { background:rgba(201,168,76,.1); color:var(--gold); }
+  .badge.edit-no { background:rgba(255,255,255,.04); color:rgba(255,255,255,.25); }
+  .row-actions { display:flex; gap:8px; }
+  .row-btn { padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--muted); transition:all .15s; letter-spacing:.06em; text-transform:uppercase; }
+  .row-btn:hover { color:var(--text); border-color:var(--line-strong); }
+  .row-btn.danger:hover { color:var(--red); border-color:var(--red); }
+  .use-count { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; }
+  .last-used { font-size:12px; color:var(--muted); }
+
+  /* ── EVENTS TABLE ── */
+  .events-table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .events-table thead tr { border-bottom:1px solid var(--line-strong); }
+  .events-table th { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); padding:11px 16px; text-align:left; }
+  .events-table tbody tr { border-bottom:1px solid var(--line); }
+  .events-table tbody tr:last-child { border-bottom:none; }
+  .events-table td { padding:12px 16px; font-size:13px; color:var(--text); }
+  .events-table td.muted { color:var(--muted); font-size:12px; }
+  .events-table td.mono { font-family:'JetBrains Mono',monospace; font-size:12px; color:#8dbde8; }
+
+  /* ── EMPTY / LOADING ── */
+  .empty { text-align:center; padding:48px; color:var(--muted); font-size:13px; }
+  .spinner { display:inline-block; width:18px; height:18px; border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin-right:8px; vertical-align:middle; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  @media(max-width:700px) {
+    .stats { grid-template-columns:1fr 1fr; }
+    .main { padding:20px; }
+    .form-row { flex-direction:column; }
+    .form-input, .form-input.wide { width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <h1>BPC <span>Admin</span></h1>
+    <p>Enter your admin key to continue.</p>
+    <div class="field-label">Admin Key</div>
+    <input id="keyInput" class="field-input" type="password" placeholder="••••••••••" autocomplete="off">
+    <div id="gateErr" class="gate-err">Invalid key.</div>
+    <button class="btn-primary" onclick="login()">ENTER</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app">
+  <div class="topbar">
+    <div class="topbar-title">BPC <span>Admin</span></div>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
+  </div>
+  <div class="main">
+
+    <!-- STATS -->
+    <div class="stats" id="stats">
+      <div class="stat-card"><div class="s-label">Total Logins</div><div class="s-val" id="st-logins">—</div></div>
+      <div class="stat-card"><div class="s-label">Unique Codes Used</div><div class="s-val" id="st-codes">—</div></div>
+      <div class="stat-card"><div class="s-label">Avg Scroll Depth</div><div class="s-val" id="st-scroll">—</div></div>
+      <div class="stat-card"><div class="s-label">Avg Session</div><div class="s-val" id="st-duration">—</div></div>
+    </div>
+
+    <!-- CODES -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Access Codes</h2>
+        <button class="btn-sm btn-accent" onclick="toggleAddForm()">+ New Code</button>
+      </div>
+
+      <div class="add-form" id="addForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Code</label>
+            <input id="newCode" class="form-input" type="text" placeholder="e.g. FERRARI24">
+          </div>
+          <div class="form-group">
+            <label>Label (who is this for?)</label>
+            <input id="newLabel" class="form-input wide" type="text" placeholder="e.g. Ferrari Team">
+          </div>
+          <div class="form-group">
+            <label>Permissions</label>
+            <div class="toggle-wrap">
+              <button class="toggle" id="editToggle" onclick="toggleEditPerm()"></button>
+              <label>Can edit prices</label>
+            </div>
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <button class="btn-sm btn-accent" onclick="submitCode()">Add Code</button>
+          </div>
+        </div>
+        <div id="addErr" style="margin-top:10px;font-size:12px;color:var(--red);display:none;"></div>
+      </div>
+
+      <div id="codesWrap">
+        <div class="empty"><span class="spinner"></span>Loading…</div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Login History</h2>
+        <button class="btn-sm btn-ghost" onclick="loadData()">↻ Refresh</button>
+      </div>
+      <div id="eventsWrap">
+        <div class="empty"><span class="spinner"></span>Loading…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+  const ADMIN_KEY_STORE = 'bpc_admin_key';
+  let adminKey = '';
+  let editPerm = false;
+
+  // ── AUTH ─────────────────────────────────────────────────────
+  function login() {
+    const v = document.getElementById('keyInput').value.trim();
+    if (!v) return;
+    adminKey = v;
+    // Validate by fetching analytics
+    fetch(`${SCRIPT_URL}?action=analytics&key=${encodeURIComponent(v)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) {
+          document.getElementById('gateErr').style.display = 'block';
+          adminKey = '';
+        } else {
+          sessionStorage.setItem(ADMIN_KEY_STORE, v);
+          showApp(d);
+        }
+      })
+      .catch(() => { document.getElementById('gateErr').style.display = 'block'; });
+  }
+
+  document.getElementById('keyInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  function signOut() {
+    adminKey = '';
+    sessionStorage.removeItem(ADMIN_KEY_STORE);
+    document.getElementById('app').classList.remove('active');
+    document.getElementById('gate').style.display = 'flex';
+    document.getElementById('keyInput').value = '';
+  }
+
+  // Auto-restore session
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = sessionStorage.getItem(ADMIN_KEY_STORE);
+    if (saved) { adminKey = saved; loadData(); }
+  });
+
+  // ── DATA ─────────────────────────────────────────────────────
+  function loadData() {
+    fetch(`${SCRIPT_URL}?action=analytics&key=${encodeURIComponent(adminKey)}`)
+      .then(r => r.json())
+      .then(d => { if (!d.error) showApp(d); })
+      .catch(console.error);
+  }
+
+  function showApp(d) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    renderStats(d.events);
+    renderCodes(d.codes);
+    renderEvents(d.events);
+  }
+
+  // ── STATS ────────────────────────────────────────────────────
+  function renderStats(events) {
+    const logins = events.filter(e => e.event === 'login');
+    const uniqueCodes = new Set(logins.map(e => e.code)).size;
+    const scrolls = logins.map(e => Number(e.scroll)).filter(n => n > 0);
+    const durations = logins.map(e => Number(e.duration)).filter(n => n > 0);
+    const avgScroll = scrolls.length ? Math.round(scrolls.reduce((a,b)=>a+b,0)/scrolls.length) : 0;
+    const avgDur = durations.length ? Math.round(durations.reduce((a,b)=>a+b,0)/durations.length) : 0;
+    document.getElementById('st-logins').textContent = logins.length;
+    document.getElementById('st-codes').textContent = uniqueCodes;
+    document.getElementById('st-scroll').textContent = scrolls.length ? avgScroll + '%' : '—';
+    document.getElementById('st-duration').textContent = durations.length ? fmtDuration(avgDur) : '—';
+  }
+
+  function fmtDuration(secs) {
+    if (secs < 60) return secs + 's';
+    return Math.round(secs/60) + 'm';
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ' ' +
+           d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  // ── CODES TABLE ───────────────────────────────────────────────
+  function renderCodes(codes) {
+    const wrap = document.getElementById('codesWrap');
+    if (!codes.length) { wrap.innerHTML = '<div class="empty">No codes yet.</div>'; return; }
+    wrap.innerHTML = `
+      <table class="codes-table">
+        <thead><tr>
+          <th>Code</th><th>Label</th><th>Edit</th><th>Status</th>
+          <th>Uses</th><th>Last Used</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${codes.map(c => `
+          <tr id="row-${CSS.escape(c.code)}">
+            <td><span class="code-pill">${esc(c.code)}</span></td>
+            <td>${esc(c.label) || '<span style="color:var(--muted)">—</span>'}</td>
+            <td><span class="badge ${c.edit ? 'edit-yes' : 'edit-no'}">${c.edit ? 'Yes' : 'No'}</span></td>
+            <td><span class="badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Active' : 'Inactive'}</span></td>
+            <td><span class="use-count">${c.useCount || 0}</span></td>
+            <td><span class="last-used">${fmtDate(c.lastUsed)}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="row-btn" onclick="toggleCode('${esc(c.code)}')">${c.active ? 'Deactivate' : 'Activate'}</button>
+                <button class="row-btn danger" onclick="deleteCode('${esc(c.code)}')">Delete</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── EVENTS TABLE ──────────────────────────────────────────────
+  function renderEvents(events) {
+    const logins = events.filter(e => e.event === 'login').slice(0, 50);
+    const wrap = document.getElementById('eventsWrap');
+    if (!logins.length) { wrap.innerHTML = '<div class="empty">No login events yet.</div>'; return; }
+    wrap.innerHTML = `
+      <table class="events-table">
+        <thead><tr>
+          <th>Time</th><th>Code</th><th>Location</th>
+          <th>Device</th><th>Duration</th><th>Scroll</th>
+        </tr></thead>
+        <tbody>
+          ${logins.map(e => `
+          <tr>
+            <td class="muted">${fmtDate(e.time)}</td>
+            <td class="mono">${esc(e.code)}</td>
+            <td class="muted">${[e.city, e.country].filter(Boolean).join(', ') || '—'}</td>
+            <td class="muted">${[e.device, e.browser].filter(Boolean).join(' · ') || '—'}</td>
+            <td class="muted">${e.duration ? fmtDuration(e.duration) : '—'}</td>
+            <td class="muted">${e.scroll ? e.scroll + '%' : '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── ADD CODE ─────────────────────────────────────────────────
+  function toggleAddForm() {
+    document.getElementById('addForm').classList.toggle('open');
+  }
+
+  function toggleEditPerm() {
+    editPerm = !editPerm;
+    document.getElementById('editToggle').classList.toggle('on', editPerm);
+  }
+
+  function submitCode() {
+    const code  = document.getElementById('newCode').value.trim();
+    const label = document.getElementById('newLabel').value.trim();
+    const errEl = document.getElementById('addErr');
+    if (!code) { errEl.textContent = 'Code cannot be empty.'; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ key: adminKey, action: 'addCode', code, label, edit: editPerm })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.error === 'duplicate') { errEl.textContent = 'Code already exists.'; errEl.style.display = 'block'; return; }
+      if (d.error) { errEl.textContent = 'Error: ' + d.error; errEl.style.display = 'block'; return; }
+      document.getElementById('newCode').value = '';
+      document.getElementById('newLabel').value = '';
+      editPerm = false;
+      document.getElementById('editToggle').classList.remove('on');
+      document.getElementById('addForm').classList.remove('open');
+      loadData();
+    })
+    .catch(() => { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; });
+  }
+
+  // ── TOGGLE CODE ───────────────────────────────────────────────
+  function toggleCode(code) {
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ key: adminKey, action: 'toggleCode', code })
+    })
+    .then(r => r.json())
+    .then(d => { if (d.ok) loadData(); });
+  }
+
+  // ── DELETE CODE ───────────────────────────────────────────────
+  function deleteCode(code) {
+    if (!confirm(`Delete code "${code}"? This cannot be undone.`)) return;
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ key: adminKey, action: 'deleteCode', code })
+    })
+    .then(r => r.json())
+    .then(d => { if (d.ok) loadData(); });
+  }
+
+  // ── UTILS ─────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body></html>
