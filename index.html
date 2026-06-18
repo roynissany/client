@@ -454,14 +454,20 @@
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
-  const ACCESS_CODE = 'CLIENT2027';
+  const ACCESS_CODES = {
+    'bpcadmin2027!': { edit: true },
+    'ROYn8200':      { edit: true },
+    'bpcclient2027!':{ edit: false },
+  };
 
   function unlock() {
-    const v = document.getElementById('pwInput').value.trim().toUpperCase();
-    if (v !== ACCESS_CODE) { document.getElementById('pwErr').style.display = 'block'; return; }
+    const v = document.getElementById('pwInput').value.trim();
+    const role = ACCESS_CODES[v];
+    if (!role) { document.getElementById('pwErr').style.display = 'block'; return; }
     currentCode = v;
     document.getElementById('gate').style.display = 'none';
     document.getElementById('navBtns').classList.add('active');
+    document.getElementById('editBtn').style.display = role.edit ? '' : 'none';
     document.getElementById('app').classList.add('active');
     document.title = 'Balaton Park - Client Area';
     trackLogin(v);
@@ -481,6 +487,7 @@
     document.getElementById('pwInput').value = '';
     document.getElementById('pwErr').style.display = 'none';
     if (document.body.classList.contains('editing')) toggleEdit();
+    document.getElementById('editBtn').style.display = '';
     document.getElementById('fixedTitleText').classList.remove('visible');
     document.title = 'Balaton Park - Client Login';
   }
