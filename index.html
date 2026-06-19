@@ -215,6 +215,8 @@
   .img-strip img { width:100%; height:100%; object-fit:cover; object-position:center 40%; filter:brightness(0.75); }
   .img-strip-overlay { position:absolute; inset:0; background:linear-gradient(90deg, rgba(10,10,12,0.7) 0%, transparent 50%, rgba(10,10,12,0.3) 100%); }
   .img-strip-label { position:absolute; bottom:20px; left:24px; z-index:2; font-size:10px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+  .hotel-btn { display:inline-block; padding:14px 36px; background:#2d5fa8; color:#fff; font-size:0.95rem; font-weight:700; border-radius:8px; text-decoration:none; letter-spacing:.04em; font-family:'Rajdhani',sans-serif; text-transform:uppercase; transition:background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease; }
+  .hotel-btn:hover { background:#1e4a8a; box-shadow:0 6px 20px rgba(30,74,138,0.45); transform:translateY(-2px); }
   /* ─── DOCS ─── */
   .docs-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   @media(max-width:680px) { .docs-grid { grid-template-columns:1fr; } }
@@ -529,8 +531,7 @@
     <p class="reveal" style="color:var(--muted);line-height:1.75;font-size:14px;margin:0 0 28px;" data-edit>
       Over 130 luxurious rooms attached to the paddock. Teams, drivers and VIPs stay at a 1-min walk. Lavender Park Restaurant serves high-end meals around the clock including room-service and even box-garage service.
     </p>
-    <a href="https://www.balatonparkhotel.com" target="_blank" rel="noopener" class="reveal"
-       style="display:inline-block;margin-bottom:60px;padding:14px 36px;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:700;border-radius:8px;text-decoration:none;letter-spacing:.04em;font-family:'Rajdhani',sans-serif;text-transform:uppercase;">
+    <a href="https://www.balatonparkhotel.com" target="_blank" rel="noopener" class="reveal hotel-btn" style="margin-bottom:60px;">
       Show Me More ↗
     </a>
 
