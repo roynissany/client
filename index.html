@@ -154,7 +154,7 @@
   }
   .reveal.visible { opacity:1; transform:translateY(0); }
   /* ─── CONTENT ─── */
-  .content { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 40px 100px; }
+  .content { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 40px 160px; }
   /* ─── SECTION HEADERS ─── */
   .section-header { margin:60px 0 28px; padding-bottom:16px; border-bottom:1px solid var(--line); }
   .section-header h2 { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; margin:0 0 4px; letter-spacing:0.02em; }
@@ -239,13 +239,14 @@
   .doc-arrow { font-size:16px; color:var(--muted); flex-shrink:0; }
   /* ─── CTA ─── */
   .cta-bar {
-    margin-top:60px; padding:36px 40px;
-    background:linear-gradient(135deg, rgba(67,126,209,0.12) 0%, rgba(67,126,209,0.04) 100%);
-    border:1px solid rgba(67,126,209,0.28); border-radius:16px;
+    position:fixed; bottom:0; left:0; right:0; z-index:50;
+    padding:16px 40px;
+    background:rgba(10,10,18,0.92); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-top:1px solid rgba(67,126,209,0.28);
     display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
   }
-  .cta-bar .cta-text h3 { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; margin:0 0 4px; }
-  .cta-bar .cta-text p { font-size:13px; color:var(--muted); margin:0; }
+  .cta-bar .cta-text h3 { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; margin:0 0 2px; }
+  .cta-bar .cta-text p { font-size:12px; color:var(--muted); margin:0; }
   .btn-cta {
     display:inline-flex; align-items:center; gap:10px;
     padding:16px 32px; background:var(--accent); color:#fff; text-decoration:none;
@@ -261,7 +262,8 @@
     .page-heading { font-size:52px; }
     .page-title-block { padding:90px 20px 36px; }
     .content { padding:0 20px 80px; }
-    .cta-bar { flex-direction:column; align-items:flex-start; }
+    .cta-bar { flex-direction:column; align-items:flex-start; padding:14px 20px; gap:12px; }
+    .content { padding:0 20px 200px; }
     .items-table th:nth-child(2),
     .items-table td:nth-child(2) { display:none; }
     .fixed-title { display:none; }
@@ -398,7 +400,7 @@
     </ul>
 
     <!-- CTA -->
-    <div class="cta-bar reveal">
+    <div class="cta-bar">
       <div class="cta-text">
         <h3>Ready to book?</h3>
         <p>Submit a quote request and our team will get back to you.</p>
