@@ -296,7 +296,7 @@
     <div class="field-label">Access code</div>
     <input id="pwInput" class="field-input" type="password" placeholder="••••••••••" autocomplete="off">
     <div id="pwErr" class="gate-err">Code not recognised. Contact <a href="mailto:info@balatonparkcircuit.com" style="color:#8dbde8">info@balatonparkcircuit.com</a></div>
-    <button class="btn-primary" onclick="unlock()">ACCESS</button>
+    <button id="accessBtn" class="btn-primary" onclick="unlock()">ACCESS</button>
     <div class="gate-foot">No code? <a href="mailto:info@balatonparkcircuit.com">info@balatonparkcircuit.com</a></div>
   </div>
 </div>
@@ -688,6 +688,8 @@
 
   // ── AUTH ─────────────────────────────────────────────────────
   let ACCESS_CODES = {}; // populated via fetch() from Apps Script on load
+  let codesReady   = false;
+  let onCodesReady = null; // queued action (unlock or auto-login) waiting for codes
   const SESSION_KEY  = 'bpc_session';
   const SESSION_TTL  = 3 * 24 * 60 * 60 * 1000; // 3 days
 
@@ -698,14 +700,11 @@
       .then(function(d) {
         if (d.codes) {
           ACCESS_CODES = d.codes;
-          // If auto-login fired before codes returned, update label now
-          if (currentCode && d.codes[currentCode]) {
-            document.getElementById('clientLabel').textContent = d.codes[currentCode].label || '';
-          }
+          codesReady   = true;
+          if (onCodesReady) { var fn = onCodesReady; onCodesReady = null; fn(); }
         }
       })
       .catch(function() {
-        // fetch failed — retry once after 3s
         setTimeout(loadCodes, 3000);
       });
   }
@@ -729,6 +728,15 @@
 
   function unlock() {
     const v = document.getElementById('pwInput').value.trim();
+    if (!v) return;
+    if (!codesReady) {
+      // Codes still loading — queue this attempt and show a hint
+      onCodesReady = unlock;
+      document.getElementById('pwErr').style.display = 'none';
+      document.getElementById('accessBtn').textContent = 'LOADING…';
+      return;
+    }
+    document.getElementById('accessBtn').textContent = 'ACCESS';
     const role = ACCESS_CODES[v];
     if (!role) { document.getElementById('pwErr').style.display = 'block'; return; }
     localStorage.setItem(SESSION_KEY, JSON.stringify({ code: v, ts: Date.now() }));
@@ -756,12 +764,15 @@
 
   // ── AUTO-LOGIN ────────────────────────────────────────────────
   (function() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-      if (saved && ACCESS_CODES[saved.code] && (Date.now() - saved.ts) < SESSION_TTL) {
-        applyLogin(saved.code, false);
-      }
-    } catch(e) {}
+    function tryAutoLogin() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+        if (!saved || (Date.now() - saved.ts) >= SESSION_TTL) return;
+        if (!codesReady) { onCodesReady = tryAutoLogin; return; }
+        if (ACCESS_CODES[saved.code]) applyLogin(saved.code, false);
+      } catch(e) {}
+    }
+    tryAutoLogin();
   })();
 
   // ── FIXED TITLE ───────────────────────────────────────────────
