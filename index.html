@@ -293,8 +293,10 @@
   <div class="gate-card">
     <h1>Client <span class="blue">Hub</span></h1>
     <p class="lede">Enter your client access code to view rates and submit a quote request.</p>
-    <div class="field-label">Access code</div>
-    <input id="pwInput" class="field-input" type="password" placeholder="••••••••••" autocomplete="off">
+    <div class="field-label">Email</div>
+    <input class="field-input" type="text" placeholder="your@email.com" autocomplete="username" tabindex="1">
+    <div class="field-label" style="margin-top:16px">Access code</div>
+    <input id="pwInput" class="field-input" type="password" placeholder="••••••••••" autocomplete="current-password" tabindex="2">
     <div id="pwErr" class="gate-err">Code not recognised. Contact <a href="mailto:info@balatonparkcircuit.com" style="color:#8dbde8">info@balatonparkcircuit.com</a></div>
     <button class="btn-primary" onclick="unlock()">ACCESS</button>
     <div class="gate-foot">No code? <a href="mailto:info@balatonparkcircuit.com">info@balatonparkcircuit.com</a></div>
