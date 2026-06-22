@@ -274,6 +274,8 @@
   const ADMIN_KEY_STORE = 'bpc_admin_key';
   let adminKey = '';
   let editPerm = false;
+  let cachedIp = '';
+  fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>{cachedIp=d.ip||'';}).catch(()=>{});
 
   // ── JSONP helper ─────────────────────────────────────────────
   function jsonp(params, onSuccess, onError) {
@@ -291,22 +293,24 @@
   }
 
   // ── AUTH ─────────────────────────────────────────────────────
-  function login() {
+  async function login() {
     const user = document.getElementById('userInput').value.trim().toLowerCase();
     const v    = document.getElementById('keyInput').value.trim();
     const err  = document.getElementById('gateErr');
-    if (user !== 'roy') { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    if (user !== 'roy') { err.textContent = 'Invalid credentials.'; err.style.display = 'block'; return; }
     if (!v) return;
-    jsonp(
-      { action: 'analytics', key: v },
-      d => {
-        if (d.error) { err.style.display = 'block'; return; }
-        adminKey = v;
-        sessionStorage.setItem(ADMIN_KEY_STORE, v);
-        showApp(d);
-      },
-      () => { err.style.display = 'block'; }
-    );
+    try {
+      const r = await fetch(`${SCRIPT_URL}?action=adminLogin&key=${encodeURIComponent(v)}&ip=${encodeURIComponent(cachedIp)}&_=${Date.now()}`).then(r => r.json());
+      if (r.blocked) { err.textContent = 'Too many attempts. Try again later.'; err.style.display = 'block'; return; }
+      if (!r.ok)     { err.textContent = 'Invalid credentials.';                err.style.display = 'block'; return; }
+      adminKey = v;
+      sessionStorage.setItem(ADMIN_KEY_STORE, v);
+      loadData();
+    } catch(e) {
+      err.textContent = 'Connection error. Please try again.';
+      err.style.display = 'block';
+    }
   }
 
   document.getElementById('userInput').addEventListener('keydown', e => {
