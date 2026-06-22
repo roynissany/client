@@ -74,6 +74,7 @@ function doGet(e) {
   }
 
   // Tracking actions — open endpoints (no admin key)
+  if (action === 'validate')   return validateCode(e.parameter, cb);
   if (action === 'login')      return logLoginGet(e.parameter, cb);
   if (action === 'exit')       return logExitGet(e.parameter, cb);
   if (action === 'heartbeat')  return logExitGet(e.parameter, cb); // periodic update, same logic as exit
@@ -92,6 +93,43 @@ function doGet(e) {
 }
 
 // ── Serve active codes to the client page ────────────────────
+// ── Validate a single code (server-side, with brute-force guard) ─
+function validateCode(p, cb) {
+  const code = String(p.code || '').trim();
+  const ip   = String(p.ip   || 'unknown').slice(0, 64);
+  if (!code) return respond({ ok: false }, cb);
+
+  // Check failure count for this IP in the last hour
+  const failSheet = getOrCreateSheet('Failures');
+  const cutoff    = new Date(Date.now() - 60 * 60 * 1000);
+  const failRows  = failSheet.getDataRange().getValues().slice(1)
+    .filter(r => String(r[0]) === ip && r[1] && new Date(r[1]) >= cutoff);
+  if (failRows.length >= 10) return respond({ ok: false, blocked: true }, cb);
+
+  // Look up code in Codes sheet
+  const rows = getSheet('Codes').getDataRange().getValues().slice(1);
+  for (const row of rows) {
+    const c      = String(row[C.CODE]).trim();
+    const active = row[C.ACTIVE] === true || row[C.ACTIVE] === 'TRUE';
+    if (c === code && active) {
+      return respond({
+        ok:    true,
+        edit:  row[C.EDIT] === true || row[C.EDIT] === 'TRUE',
+        label: row[C.LABEL] || ''
+      }, cb);
+    }
+  }
+
+  // Invalid — log failure
+  failSheet.appendRow([ip, new Date(), code]);
+  return respond({ ok: false }, cb);
+}
+
+function getOrCreateSheet(name) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
 function serveCodes(cb) {
   const sheet = getSheet('Codes');
   const rows  = sheet.getDataRange().getValues().slice(1);
