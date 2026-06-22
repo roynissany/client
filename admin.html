@@ -383,7 +383,7 @@
 
     const rows = codes.map(c => {
       // Build drill-down mini session rows for this code
-      const codeSessions = allEvents.filter(e => e.event === 'login' && e.code === c.code);
+      const codeSessions = allEvents.filter(e => e.event === 'login' && String(e.code) === String(c.code));
       let drillBody = '';
       if (codeSessions.length) {
         drillBody = codeSessions.slice(0, 25).map(s => {
