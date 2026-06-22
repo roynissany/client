@@ -75,6 +75,7 @@ function doGet(e) {
 
   // Tracking actions — open endpoints (no admin key)
   if (action === 'validate')   return validateCode(e.parameter, cb);
+  if (action === 'adminLogin') return adminLogin(e.parameter, cb);
   if (action === 'login')      return logLoginGet(e.parameter, cb);
   if (action === 'exit')       return logExitGet(e.parameter, cb);
   if (action === 'heartbeat')  return logExitGet(e.parameter, cb); // periodic update, same logic as exit
@@ -122,6 +123,19 @@ function validateCode(p, cb) {
 
   // Invalid — log failure
   failSheet.appendRow([ip, new Date(), code]);
+  return respond({ ok: false }, cb);
+}
+
+// ── Admin login with brute-force guard ───────────────────────
+function adminLogin(p, cb) {
+  const ip = String(p.ip || 'unknown').slice(0, 64);
+  const failSheet = getOrCreateSheet('Failures');
+  const cutoff    = new Date(Date.now() - 60 * 60 * 1000);
+  const failRows  = failSheet.getDataRange().getValues().slice(1)
+    .filter(r => String(r[0]) === 'adm_' + ip && r[1] && new Date(r[1]) >= cutoff);
+  if (failRows.length >= 5) return respond({ ok: false, blocked: true }, cb);
+  if (String(p.key) === ADMIN_KEY) return respond({ ok: true }, cb);
+  failSheet.appendRow(['adm_' + ip, new Date(), '']);
   return respond({ ok: false }, cb);
 }
 
