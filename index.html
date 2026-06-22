@@ -687,28 +687,29 @@
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
-  let ACCESS_CODES = {}; // populated via JSONP from Apps Script on load
+  let ACCESS_CODES = {}; // populated via fetch() from Apps Script on load
   const SESSION_KEY  = 'bpc_session';
   const SESSION_TTL  = 3 * 24 * 60 * 60 * 1000; // 3 days
 
-  // Fetch live codes from Apps Script via JSONP (non-blocking, no CORS issues)
-  (function() {
-    const cb = '_bpccb' + Math.random().toString(36).substr(2,6);
-    window[cb] = function(d) {
-      if (d.codes) {
-        ACCESS_CODES = d.codes;
-        // If user is already logged in (auto-login fired before JSONP returned), update label now
-        if (currentCode && d.codes[currentCode]) {
-          document.getElementById('clientLabel').textContent = d.codes[currentCode].label || '';
+  // Fetch live codes from Apps Script via fetch() (CORS-safe, works in all browsers)
+  function loadCodes() {
+    fetch(`${SCRIPT_URL}?action=codes&_=${Date.now()}`)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.codes) {
+          ACCESS_CODES = d.codes;
+          // If auto-login fired before codes returned, update label now
+          if (currentCode && d.codes[currentCode]) {
+            document.getElementById('clientLabel').textContent = d.codes[currentCode].label || '';
+          }
         }
-      }
-      delete window[cb];
-    };
-    const s = document.createElement('script');
-    s.src = `${SCRIPT_URL}?action=codes&callback=${cb}&_=${Date.now()}`;
-    s.onerror = function() { delete window[cb]; };
-    document.head.appendChild(s);
-  })();
+      })
+      .catch(function() {
+        // fetch failed — retry once after 3s
+        setTimeout(loadCodes, 3000);
+      });
+  }
+  loadCodes();
 
   function applyLogin(code, track) {
     const role = ACCESS_CODES[code];
