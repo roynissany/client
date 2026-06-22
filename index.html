@@ -606,23 +606,28 @@
     };
   }
 
+  // Fire-and-forget GET to GAS — uses fetch() which works cross-browser and isn't
+  // blocked by ad blockers the way image-pixel requests are.
+  function gasGet(params) {
+    if (!SCRIPT_URL) return;
+    fetch(`${SCRIPT_URL}?${params}&_=${Date.now()}`).catch(function(){});
+  }
+
   // Flush previous session's exit data — runs on every page load, not gated on login method
   (function flushPendingExit() {
-    if (!SCRIPT_URL) return;
     try {
       const pending = JSON.parse(localStorage.getItem('bpc_pending_exit') || 'null');
       if (pending && pending.sessionId) {
-        new Image().src = `${SCRIPT_URL}?action=exit`
+        gasGet('action=exit'
           + `&sessionId=${encodeURIComponent(pending.sessionId)}`
           + `&duration=${pending.duration}`
-          + `&scrollDepth=${pending.scrollDepth}`;
+          + `&scrollDepth=${pending.scrollDepth}`);
         localStorage.removeItem('bpc_pending_exit');
       }
     } catch(e) {}
   })();
 
   async function trackLogin(code) {
-    if (!SCRIPT_URL) return;
     const dev  = getDeviceInfo();
     const ref  = document.referrer || '(direct)';
     const utm  = new URLSearchParams(location.search).get('utm_source') || '';
@@ -630,7 +635,7 @@
     localStorage.setItem('bpc_visited', '1');
     let geo = {};
     try { geo = await fetch('https://ipapi.co/json/').then(r => r.json()); } catch {}
-    new Image().src = `${SCRIPT_URL}?action=login`
+    gasGet('action=login'
       + `&sessionId=${encodeURIComponent(SESSION_ID)}`
       + `&code=${encodeURIComponent(code)}`
       + `&ip=${encodeURIComponent(geo.ip||'')}`
@@ -646,22 +651,19 @@
       + `&tz=${encodeURIComponent(dev.tz)}`
       + `&ref=${encodeURIComponent(ref)}`
       + `&utm=${encodeURIComponent(utm)}`
-      + `&returning=${returning ? '1' : '0'}`;
+      + `&returning=${returning ? '1' : '0'}`);
   }
 
   function trackEvent(type) {
-    if (!currentCode || !SCRIPT_URL) return;
-    new Image().src = `${SCRIPT_URL}?action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`;
+    if (!currentCode) return;
+    gasGet(`action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`);
   }
 
   // ── HEARTBEAT — fires every 60s after login ──────────────────
-  // sendBeacon fails on GAS (302 redirect, beacon doesn't follow) so we use
-  // image-pixel GETs which do follow redirects. Heartbeat ensures we have
-  // duration/scroll data even if the user never returns for the localStorage flush.
   function sendHeartbeat() {
-    if (!currentCode || !SCRIPT_URL) return;
+    if (!currentCode) return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
-    new Image().src = `${SCRIPT_URL}?action=heartbeat&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`;
+    gasGet(`action=heartbeat&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`);
   }
   function startHeartbeat() {
     if (heartbeatTimer) return;
