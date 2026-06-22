@@ -687,13 +687,7 @@
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
-  // Fallback codes used until Apps Script is configured
-  let ACCESS_CODES = {
-    'bpcadmin2027!': { edit: true },
-    'ROYn8200':      { edit: true },
-    'bpcclient2027!':{ edit: false },
-    '2907':          { edit: false },
-  };
+  let ACCESS_CODES = {}; // populated via JSONP from Apps Script on load
   const SESSION_KEY  = 'bpc_session';
   const SESSION_TTL  = 3 * 24 * 60 * 60 * 1000; // 3 days
 
