@@ -157,6 +157,10 @@
   .page-btn:hover:not(:disabled) { color:var(--text); border-color:var(--line-strong); }
   .page-btn:disabled { opacity:.3; cursor:default; }
   .page-info { font-size:12px; color:var(--muted); padding:0 8px; }
+  .codes-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .codes-search { flex:1; background:var(--surface); border:1px solid var(--line); border-radius:8px; color:var(--text); font-size:13px; padding:8px 12px; outline:none; transition:border-color .15s; }
+  .codes-search:focus { border-color:var(--accent); }
+  .codes-search::placeholder { color:var(--muted); }
 
   /* ── EMPTY / LOADING ── */
   .empty { text-align:center; padding:48px; color:var(--muted); font-size:13px; }
@@ -243,6 +247,9 @@
         <div id="addErr" style="margin-top:10px;font-size:12px;color:var(--red);display:none;"></div>
       </div>
 
+      <div class="codes-toolbar">
+        <input id="codesSearch" class="codes-search" type="text" placeholder="Search by code or label…" oninput="codesSearchChanged()">
+      </div>
       <div id="codesWrap">
         <div class="empty"><span class="spinner"></span>Loading…</div>
       </div>
@@ -398,11 +405,45 @@
   }
 
   // ── CODES TABLE ───────────────────────────────────────────────
+  let codesPage  = 1;
+  const CODES_PAGE_SIZE = 10;
+  let allCodesCache = [];
+
+  function codesSearchChanged() {
+    codesPage = 1;
+    renderCodes(allCodesCache);
+  }
+
+  function changeCodesPage(delta) {
+    codesPage += delta;
+    renderCodes(allCodesCache);
+  }
+
   function renderCodes(codes) {
+    allCodesCache = codes;
     const wrap = document.getElementById('codesWrap');
     if (!codes.length) { wrap.innerHTML = '<div class="empty">No codes yet.</div>'; return; }
 
-    const rows = codes.map(c => {
+    // Sort: most recent first (by created date, fall back to index order)
+    const sorted = [...codes].sort((a, b) => {
+      const ta = a.created ? new Date(a.created).getTime() : 0;
+      const tb = b.created ? new Date(b.created).getTime() : 0;
+      return tb - ta;
+    });
+
+    // Filter by search query
+    const q = (document.getElementById('codesSearch')?.value || '').toLowerCase().trim();
+    const filtered = q ? sorted.filter(c =>
+      String(c.code).toLowerCase().includes(q) ||
+      String(c.label || '').toLowerCase().includes(q)
+    ) : sorted;
+
+    // Paginate
+    const totalPages = Math.max(1, Math.ceil(filtered.length / CODES_PAGE_SIZE));
+    if (codesPage > totalPages) codesPage = totalPages;
+    const page = filtered.slice((codesPage - 1) * CODES_PAGE_SIZE, codesPage * CODES_PAGE_SIZE);
+
+    const rows = page.map(c => {
       // Build drill-down mini session rows for this code
       const codeSessions = allEvents.filter(e => e.event === 'login' && String(e.code) === String(c.code));
       let drillBody = '';
@@ -459,6 +500,13 @@
         </tr>`;
     }).join('');
 
+    const pagination = totalPages > 1 ? `
+      <div class="pagination">
+        <button class="page-btn" onclick="changeCodesPage(-1)" ${codesPage === 1 ? 'disabled' : ''}>← Prev</button>
+        <span class="page-info">Page ${codesPage} of ${totalPages} &nbsp;·&nbsp; ${filtered.length} code${filtered.length !== 1 ? 's' : ''}</span>
+        <button class="page-btn" onclick="changeCodesPage(1)" ${codesPage === totalPages ? 'disabled' : ''}>Next →</button>
+      </div>` : `<div style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center">${filtered.length} code${filtered.length !== 1 ? 's' : ''}</div>`;
+
     wrap.innerHTML = `
       <div id="bulkBar" class="bulk-bar">
         <span class="bulk-count" id="bulkCount">0 selected</span>
@@ -473,7 +521,8 @@
           <th>Uses</th><th>Last Used</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
-      </table>`;
+      </table>
+      ${pagination}`;
   }
 
   // ── EVENTS TABLE ──────────────────────────────────────────────
