@@ -86,6 +86,7 @@ function doGet(e) {
   if (action === 'toggleCode')    return toggleCode(e.parameter, cb);
   if (action === 'deleteCode')    return deleteCode(e.parameter, cb);
   if (action === 'deleteSession') return deleteSession(e.parameter, cb);
+  if (action === 'clearStats')    return clearStats(cb);
 
   return respond({ error: 'unknown action' }, cb);
 }
@@ -329,15 +330,55 @@ function deleteSession(d, cb) {
   const sid   = String(d.sessionId || '');
   if (!sid) return respond({ error: 'missing sessionId' }, cb);
   const data  = sheet.getDataRange().getValues();
-  // Collect row indexes to delete (bottom-up to preserve indexes)
+
+  // Find rows to delete and capture the code from the login row
+  let deletedCode = '';
   const toDelete = [];
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][C.EV_SESSION]) === sid) toDelete.push(i + 1);
+    if (String(data[i][C.EV_SESSION]) === sid) {
+      toDelete.push(i + 1);
+      if (data[i][C.EV_EVENT] === 'login' && !deletedCode)
+        deletedCode = String(data[i][C.EV_CODE] || '');
+    }
   }
-  for (let i = toDelete.length - 1; i >= 0; i--) {
-    sheet.deleteRow(toDelete[i]);
+  for (let i = toDelete.length - 1; i >= 0; i--) sheet.deleteRow(toDelete[i]);
+
+  // Recount remaining logins for this code and update the Codes sheet
+  if (deletedCode) {
+    const remaining = sheet.getDataRange().getValues().slice(1)
+      .filter(r => String(r[C.EV_CODE]) === deletedCode && r[C.EV_EVENT] === 'login');
+    const codeSheet = getSheet('Codes');
+    const codeRows  = codeSheet.getDataRange().getValues();
+    for (let i = 1; i < codeRows.length; i++) {
+      if (String(codeRows[i][C.CODE]).trim() === deletedCode) {
+        codeSheet.getRange(i + 1, C.USE_COUNT + 1).setValue(remaining.length);
+        if (remaining.length > 0) {
+          const lastTime = remaining.reduce((mx, r) => {
+            const t = r[C.EV_TIME] ? new Date(r[C.EV_TIME]).getTime() : 0;
+            return t > mx ? t : mx;
+          }, 0);
+          codeSheet.getRange(i + 1, C.LAST_USED + 1).setValue(new Date(lastTime));
+        } else {
+          codeSheet.getRange(i + 1, C.LAST_USED + 1).setValue('');
+        }
+        break;
+      }
+    }
   }
+
   return respond({ ok: true, deleted: toDelete.length }, cb);
+}
+
+// ── Clear duration & scroll averages (keep login history) ────
+function clearStats(cb) {
+  const sheet = getSheet('Events');
+  const data  = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][C.EV_DURATION] !== '' || data[i][C.EV_SCROLL] !== '') {
+      sheet.getRange(i + 1, C.EV_DURATION + 1, 1, 2).setValues([['', '']]);
+    }
+  }
+  return respond({ ok: true, cleared: data.length - 1 }, cb);
 }
 
 // ── One-time setup: create sheet headers ─────────────────────
