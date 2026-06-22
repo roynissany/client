@@ -677,6 +677,7 @@
   }
   function startHeartbeat() {
     if (heartbeatTimer) return;
+    setTimeout(sendHeartbeat, 10000);          // early capture for short sessions
     heartbeatTimer = setInterval(sendHeartbeat, 60000);
   }
 
