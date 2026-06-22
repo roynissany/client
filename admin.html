@@ -147,6 +147,17 @@
   .ev-chip.info { background:rgba(67,126,209,.12); color:#8dbde8; }
   .ev-chip.exit { background:rgba(255,255,255,.05); color:var(--muted); }
 
+  /* ── SESSION BULK BAR ── */
+  .sess-bulk-bar { display:none; background:rgba(255,93,77,.07); border:1px solid rgba(255,93,77,.25); border-radius:10px; padding:10px 16px; margin-bottom:12px; align-items:center; gap:10px; }
+  .sess-bulk-bar.visible { display:flex; }
+
+  /* ── PAGINATION ── */
+  .pagination { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:16px; }
+  .page-btn { padding:6px 14px; font-size:12px; font-weight:600; border-radius:7px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; transition:all .15s; }
+  .page-btn:hover:not(:disabled) { color:var(--text); border-color:var(--line-strong); }
+  .page-btn:disabled { opacity:.3; cursor:default; }
+  .page-info { font-size:12px; color:var(--muted); padding:0 8px; }
+
   /* ── EMPTY / LOADING ── */
   .empty { text-align:center; padding:48px; color:var(--muted); font-size:13px; }
   .spinner { display:inline-block; width:18px; height:18px; border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin-right:8px; vertical-align:middle; }
@@ -166,10 +177,12 @@
 <div id="gate" class="gate">
   <div class="gate-card">
     <h1>BPC <span>Admin</span></h1>
-    <p>Enter your admin key to continue.</p>
-    <div class="field-label">Admin Key</div>
-    <input id="keyInput" class="field-input" type="password" placeholder="••••••••••" autocomplete="off">
-    <div id="gateErr" class="gate-err">Invalid key.</div>
+    <p>Enter your credentials to continue.</p>
+    <div class="field-label">Username</div>
+    <input id="userInput" class="field-input" type="text" placeholder="username" autocomplete="username">
+    <div class="field-label" style="margin-top:16px">Password</div>
+    <input id="keyInput" class="field-input" type="password" placeholder="••••••••••" autocomplete="current-password">
+    <div id="gateErr" class="gate-err">Invalid credentials.</div>
     <button class="btn-primary" onclick="login()">ENTER</button>
   </div>
 </div>
@@ -272,20 +285,26 @@
 
   // ── AUTH ─────────────────────────────────────────────────────
   function login() {
-    const v = document.getElementById('keyInput').value.trim();
+    const user = document.getElementById('userInput').value.trim().toLowerCase();
+    const v    = document.getElementById('keyInput').value.trim();
+    const err  = document.getElementById('gateErr');
+    if (user !== 'roy') { err.style.display = 'block'; return; }
     if (!v) return;
     jsonp(
       { action: 'analytics', key: v },
       d => {
-        if (d.error) { document.getElementById('gateErr').style.display = 'block'; return; }
+        if (d.error) { err.style.display = 'block'; return; }
         adminKey = v;
         sessionStorage.setItem(ADMIN_KEY_STORE, v);
         showApp(d);
       },
-      () => { document.getElementById('gateErr').style.display = 'block'; }
+      () => { err.style.display = 'block'; }
     );
   }
 
+  document.getElementById('userInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('keyInput').focus();
+  });
   document.getElementById('keyInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') login();
   });
@@ -295,6 +314,7 @@
     sessionStorage.removeItem(ADMIN_KEY_STORE);
     document.getElementById('app').classList.remove('active');
     document.getElementById('gate').style.display = 'flex';
+    document.getElementById('userInput').value = '';
     document.getElementById('keyInput').value = '';
   }
 
@@ -346,6 +366,7 @@
 
   function setFilter(key) {
     activeFilter = key;
+    currentPage = 1;
     document.querySelectorAll('.sf-btn').forEach(b => b.classList.toggle('active', b.dataset.f === key));
     renderStats(filterEvents(allEvents));
   }
@@ -465,6 +486,9 @@
     info_noise:    'Noise Monitor',      info_weather:   'Weather Station',
   };
 
+  let currentPage = 1;
+  const PAGE_SIZE = 50;
+
   function renderEvents(events) {
     const wrap = document.getElementById('eventsWrap');
     // Group sub-events by sessionId
@@ -473,8 +497,11 @@
       if (!subMap[e.session]) subMap[e.session] = [];
       subMap[e.session].push(e);
     });
-    const sessions = events.filter(e => e.event === 'login').slice(0, 50);
-    if (!sessions.length) { wrap.innerHTML = '<div class="empty">No login sessions yet.</div>'; return; }
+    const allSessions  = events.filter(e => e.event === 'login');
+    const totalPages   = Math.max(1, Math.ceil(allSessions.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const sessions     = allSessions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    if (!allSessions.length) { wrap.innerHTML = '<div class="empty">No login sessions yet.</div>'; return; }
 
     let rows = '';
     sessions.forEach((s, i) => {
@@ -487,6 +514,9 @@
       const hasSubs = subs.length > 0;
       rows += `
         <tr class="session-row" onclick="toggleSession(${i})">
+          <td class="td-check" onclick="event.stopPropagation()">
+            <input type="checkbox" class="row-check sess-chk" value="${esc(s.session)}" onchange="updateSessBulkBar()">
+          </td>
           <td><span style="color:var(--muted);font-size:12px">${fmtDate(s.time)}</span></td>
           <td><span class="code-pill">${esc(s.code)}</span>${s.returning === 'returning' ? ' <span style="font-size:10px;color:var(--muted)">↩</span>' : ''}</td>
           <td style="color:var(--muted);font-size:12px">${[s.city, s.country].filter(Boolean).join(', ') || '—'}</td>
@@ -497,7 +527,7 @@
           </td>
         </tr>
         <tr class="session-detail" id="sd-${i}">
-          <td colspan="6">
+          <td colspan="7">
             <div class="detail-grid">
               <div class="detail-item"><strong>Device</strong><br>${[s.device, s.os, s.browser].filter(Boolean).join(' · ') || '—'}</div>
               <div class="detail-item"><strong>Screen</strong><br>${s.screen || '—'}</div>
@@ -514,13 +544,27 @@
         </tr>`;
     });
 
+    const pager = totalPages > 1 ? `
+      <div class="pagination">
+        <button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>← Prev</button>
+        <span class="page-info">Page ${currentPage} of ${totalPages} · ${allSessions.length} sessions</span>
+        <button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>
+      </div>` : '';
+
     wrap.innerHTML = `
+      <div id="sessBulkBar" class="sess-bulk-bar">
+        <span class="bulk-count" id="sessBulkCount">0 selected</span>
+        <button class="btn-danger-sm" onclick="bulkDeleteSessions()">Delete Selected</button>
+        <button class="bulk-clear" onclick="clearSessSelection()">✕ Clear</button>
+      </div>
       <table class="sessions-table">
         <thead><tr>
+          <th class="th-check"><input type="checkbox" class="row-check" id="chkAllSess" onclick="selectAllSessions(this.checked)"></th>
           <th>Time</th><th>Code</th><th>Location</th><th>Duration</th><th>Scroll</th><th>Activity</th>
         </tr></thead>
         <tbody>${rows}</tbody>
-      </table>`;
+      </table>
+      ${pager}`;
   }
 
   function toggleSession(i) {
@@ -528,6 +572,56 @@
     const detail = document.getElementById('sd-' + i);
     row.classList.toggle('expanded');
     detail.classList.toggle('open');
+  }
+
+  function changePage(p) {
+    currentPage = p;
+    renderEvents(allEvents);
+  }
+
+  // ── SESSION BULK DELETE ───────────────────────────────────────
+  function updateSessBulkBar() {
+    const selected = document.querySelectorAll('.sess-chk:checked');
+    const all      = document.querySelectorAll('.sess-chk');
+    const bar      = document.getElementById('sessBulkBar');
+    const count    = document.getElementById('sessBulkCount');
+    const chkAll   = document.getElementById('chkAllSess');
+    if (!bar) return;
+    bar.classList.toggle('visible', selected.length > 0);
+    if (count)  count.textContent = selected.length + ' selected';
+    if (chkAll) {
+      chkAll.indeterminate = selected.length > 0 && selected.length < all.length;
+      chkAll.checked = all.length > 0 && selected.length === all.length;
+    }
+  }
+
+  function selectAllSessions(checked) {
+    document.querySelectorAll('.sess-chk').forEach(cb => cb.checked = checked);
+    updateSessBulkBar();
+  }
+
+  function clearSessSelection() {
+    document.querySelectorAll('.sess-chk').forEach(cb => cb.checked = false);
+    const chkAll = document.getElementById('chkAllSess');
+    if (chkAll) { chkAll.checked = false; chkAll.indeterminate = false; }
+    updateSessBulkBar();
+  }
+
+  function bulkDeleteSessions() {
+    const sessionIds = Array.from(document.querySelectorAll('.sess-chk:checked')).map(cb => cb.value);
+    if (!sessionIds.length) return;
+    if (!confirm(`Delete ${sessionIds.length} session(s) and all their events? This cannot be undone.`)) return;
+    // Remove from allEvents immediately and re-render
+    const sidSet = new Set(sessionIds);
+    allEvents = allEvents.filter(e => !sidSet.has(e.session));
+    renderEvents(allEvents);
+    renderStats(filterEvents(allEvents));
+    // Fire backend deletes
+    sessionIds.forEach(sessionId => {
+      jsonp({ action: 'deleteSession', key: adminKey, sessionId }, d => {
+        if (!d.ok) loadData(); // revert on failure
+      });
+    });
   }
 
   // ── ADD CODE ─────────────────────────────────────────────────
