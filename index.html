@@ -606,11 +606,10 @@
     };
   }
 
-  // Fire-and-forget GET to GAS — uses fetch() which works cross-browser and isn't
-  // blocked by ad blockers the way image-pixel requests are.
-  function gasGet(params) {
+  // Fire-and-forget GET to GAS. keepalive=true lets the request survive tab hide/close.
+  function gasGet(params, keepalive) {
     if (!SCRIPT_URL) return;
-    fetch(`${SCRIPT_URL}?${params}&_=${Date.now()}`).catch(function(){});
+    fetch(`${SCRIPT_URL}?${params}&_=${Date.now()}`, keepalive ? { keepalive: true } : {}).catch(function(){});
   }
 
   // Flush previous session's exit data — runs on every page load, not gated on login method
@@ -663,7 +662,8 @@
   function sendHeartbeat() {
     if (!currentCode) return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
-    gasGet(`action=heartbeat&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`);
+    // keepalive=true ensures request completes even when tab is hidden/closing
+    gasGet(`action=heartbeat&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`, true);
   }
   function startHeartbeat() {
     if (heartbeatTimer) return;
