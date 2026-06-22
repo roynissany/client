@@ -126,7 +126,7 @@ function serveAnalytics(cb) {
     time:      row[C.EV_TIME] ? new Date(row[C.EV_TIME]).toISOString() : '',
     session:   row[C.EV_SESSION],
     event:     row[C.EV_EVENT],
-    code:      row[C.EV_CODE],
+    code:      String(row[C.EV_CODE] || ''),
     city:      row[C.EV_CITY],
     region:    row[C.EV_REGION],
     country:   row[C.EV_COUNTRY],
