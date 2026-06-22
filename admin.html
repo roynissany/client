@@ -353,7 +353,7 @@
   // ── STATS ────────────────────────────────────────────────────
   function renderStats(events) {
     const logins = events.filter(e => e.event === 'login');
-    const uniqueCodes = new Set(logins.map(e => e.code)).size;
+    const uniqueCodes = new Set(logins.map(e => String(e.code))).size;
     const scrolls = logins.map(e => Number(e.scroll)).filter(n => n > 0);
     const durations = logins.map(e => Number(e.duration)).filter(n => n > 0);
     const avgScroll = scrolls.length ? Math.round(scrolls.reduce((a,b)=>a+b,0)/scrolls.length) : 0;
