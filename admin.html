@@ -342,6 +342,7 @@
 
   let allEvents = [];
   let activeFilter = 'all';
+  const STATS_EXCLUDED = new Set(['2907','Hagbierez1!','adricsabi1','Omerh04','gianpinumber1']);
 
   function showApp(d) {
     document.getElementById('gate').style.display = 'none';
@@ -367,8 +368,10 @@
 
   function filterEvents(events) {
     const cutoff = filterCutoff(activeFilter);
-    if (!cutoff) return events;
-    return events.filter(e => e.time && new Date(e.time) >= cutoff);
+    return events.filter(e =>
+      !STATS_EXCLUDED.has(String(e.code)) &&
+      (!cutoff || (e.time && new Date(e.time) >= cutoff))
+    );
   }
 
   function setFilter(key) {
