@@ -81,10 +81,11 @@ function doGet(e) {
 
   if (key !== ADMIN_KEY) return respond({ error: 'unauthorized' }, cb);
 
-  if (action === 'analytics')  return serveAnalytics(cb);
-  if (action === 'addCode')    return addCode(e.parameter, cb);
-  if (action === 'toggleCode') return toggleCode(e.parameter, cb);
-  if (action === 'deleteCode') return deleteCode(e.parameter, cb);
+  if (action === 'analytics')     return serveAnalytics(cb);
+  if (action === 'addCode')       return addCode(e.parameter, cb);
+  if (action === 'toggleCode')    return toggleCode(e.parameter, cb);
+  if (action === 'deleteCode')    return deleteCode(e.parameter, cb);
+  if (action === 'deleteSession') return deleteSession(e.parameter, cb);
 
   return respond({ error: 'unknown action' }, cb);
 }
@@ -320,6 +321,23 @@ function deleteCode(d, cb) {
     }
   }
   return respond({ error: 'not found' }, cb);
+}
+
+// ── Delete all rows for a session (login + sub-events) ───────
+function deleteSession(d, cb) {
+  const sheet = getSheet('Events');
+  const sid   = String(d.sessionId || '');
+  if (!sid) return respond({ error: 'missing sessionId' }, cb);
+  const data  = sheet.getDataRange().getValues();
+  // Collect row indexes to delete (bottom-up to preserve indexes)
+  const toDelete = [];
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][C.EV_SESSION]) === sid) toDelete.push(i + 1);
+  }
+  for (let i = toDelete.length - 1; i >= 0; i--) {
+    sheet.deleteRow(toDelete[i]);
+  }
+  return respond({ ok: true, deleted: toDelete.length }, cb);
 }
 
 // ── One-time setup: create sheet headers ─────────────────────
