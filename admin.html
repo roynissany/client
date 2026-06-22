@@ -408,6 +408,8 @@
   let codesPage  = 1;
   const CODES_PAGE_SIZE = 10;
   let allCodesCache = [];
+  let codesSort = 'created'; // 'created' | 'uses' | 'lastUsed'
+  let codesSortDir = -1;     // -1 = desc, 1 = asc
 
   function codesSearchChanged() {
     codesPage = 1;
@@ -419,16 +421,31 @@
     renderCodes(allCodesCache);
   }
 
+  function sortCodesBy(col) {
+    if (codesSort === col) { codesSortDir *= -1; }
+    else { codesSort = col; codesSortDir = col === 'created' ? -1 : -1; }
+    codesPage = 1;
+    renderCodes(allCodesCache);
+  }
+
   function renderCodes(codes) {
     allCodesCache = codes;
     const wrap = document.getElementById('codesWrap');
     if (!codes.length) { wrap.innerHTML = '<div class="empty">No codes yet.</div>'; return; }
 
-    // Sort: most recent first (by created date, fall back to index order)
+    // Sort
     const sorted = [...codes].sort((a, b) => {
-      const ta = a.created ? new Date(a.created).getTime() : 0;
-      const tb = b.created ? new Date(b.created).getTime() : 0;
-      return tb - ta;
+      let va, vb;
+      if (codesSort === 'uses') {
+        va = a.useCount || 0; vb = b.useCount || 0;
+      } else if (codesSort === 'lastUsed') {
+        va = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
+        vb = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
+      } else {
+        va = a.created ? new Date(a.created).getTime() : 0;
+        vb = b.created ? new Date(b.created).getTime() : 0;
+      }
+      return (va - vb) * codesSortDir;
     });
 
     // Filter by search query
@@ -517,8 +534,11 @@
       <table class="codes-table">
         <thead><tr>
           <th class="th-check"><input type="checkbox" class="row-check" id="chkAll" onclick="selectAll(this.checked)"></th>
-          <th>Code</th><th>Label</th><th>Edit</th><th>Status</th>
-          <th>Uses</th><th>Last Used</th><th></th>
+          <th onclick="sortCodesBy('created')" style="cursor:pointer;user-select:none">Code ${codesSort==='created' ? (codesSortDir===-1?'↓':'↑') : '<span style="opacity:.3">↕</span>'}</th>
+          <th>Label</th><th>Edit</th><th>Status</th>
+          <th onclick="sortCodesBy('uses')" style="cursor:pointer;user-select:none">Uses ${codesSort==='uses' ? (codesSortDir===-1?'↓':'↑') : '<span style="opacity:.3">↕</span>'}</th>
+          <th onclick="sortCodesBy('lastUsed')" style="cursor:pointer;user-select:none">Last Used ${codesSort==='lastUsed' ? (codesSortDir===-1?'↓':'↑') : '<span style="opacity:.3">↕</span>'}</th>
+          <th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
