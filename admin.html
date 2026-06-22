@@ -680,11 +680,37 @@
     const sessionIds = Array.from(document.querySelectorAll('.sess-chk:checked')).map(cb => cb.value);
     if (!sessionIds.length) return;
     if (!confirm(`Delete ${sessionIds.length} session(s) and all their events? This cannot be undone.`)) return;
-    // Remove from allEvents immediately and re-render
+
     const sidSet = new Set(sessionIds);
+
+    // Capture affected codes before filtering
+    const affectedCodes = new Set(
+      allEvents.filter(e => sidSet.has(e.session) && e.event === 'login').map(e => String(e.code))
+    );
+
+    // Remove from allEvents immediately and re-render
     allEvents = allEvents.filter(e => !sidSet.has(e.session));
     renderEvents(allEvents);
     renderStats(filterEvents(allEvents));
+
+    // Optimistically update allCodesCache for affected codes
+    if (affectedCodes.size > 0) {
+      affectedCodes.forEach(code => {
+        const remaining = allEvents.filter(e => e.event === 'login' && String(e.code) === code);
+        const idx = allCodesCache.findIndex(c => String(c.code) === code);
+        if (idx !== -1) {
+          allCodesCache[idx].useCount = remaining.length;
+          allCodesCache[idx].lastUsed = remaining.length
+            ? remaining.reduce((mx, e) => {
+                const t = e.time ? new Date(e.time).getTime() : 0;
+                return t > (mx ? new Date(mx).getTime() : 0) ? e.time : mx;
+              }, null)
+            : '';
+        }
+      });
+      renderCodes(allCodesCache);
+    }
+
     // Fire backend deletes
     sessionIds.forEach(sessionId => {
       jsonp({ action: 'deleteSession', key: adminKey, sessionId }, d => {
