@@ -241,12 +241,11 @@
   /* ─── CTA ─── */
   .cta-bar {
     position:fixed; bottom:0; left:0; right:0; z-index:50;
-    padding:16px 40px;
     background:rgba(10,10,18,0.92); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
     border-top:1px solid rgba(67,126,209,0.28);
   }
   .cta-bar-inner {
-    max-width:1100px; margin:0 auto;
+    max-width:1100px; margin:0 auto; padding:16px 40px;
     display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
   }
   .cta-bar .cta-text h3 { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; margin:0 0 2px; }
@@ -266,8 +265,7 @@
     .page-heading { font-size:52px; }
     .page-title-block { padding:90px 20px 36px; }
     .content { padding:0 20px 80px; }
-    .cta-bar { padding:14px 20px; }
-    .cta-bar-inner { flex-direction:column; align-items:flex-start; gap:12px; }
+    .cta-bar-inner { flex-direction:column; align-items:flex-start; gap:12px; padding:14px 20px; }
     .content { padding:0 20px 200px; }
     .items-table th:nth-child(2),
     .items-table td:nth-child(2) { display:none; }
