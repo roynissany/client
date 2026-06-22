@@ -659,33 +659,35 @@
   }
 
   // ── HEARTBEAT — fires every 60s after login ──────────────────
+  function saveExitToStorage(duration) {
+    try {
+      localStorage.setItem('bpc_pending_exit', JSON.stringify({
+        sessionId: SESSION_ID, code: currentCode, duration, scrollDepth: maxScroll
+      }));
+    } catch(e) {}
+  }
+
   function sendHeartbeat() {
     if (!currentCode) return;
     const duration = Math.round((Date.now() - SESSION_START) / 1000);
-    // keepalive=true ensures request completes even when tab is hidden/closing
-    gasGet(`action=heartbeat&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`, true);
+    // Always update localStorage so flushPendingExit has the freshest data
+    saveExitToStorage(duration);
+    // Regular fetch (no keepalive) — keepalive + cross-origin 302 redirect is buggy in Chrome/Safari
+    gasGet(`action=heartbeat&sessionId=${encodeURIComponent(SESSION_ID)}&duration=${duration}&scrollDepth=${maxScroll}`);
   }
   function startHeartbeat() {
     if (heartbeatTimer) return;
     heartbeatTimer = setInterval(sendHeartbeat, 60000);
   }
 
-  // Fire on tab hide (catches mobile + most desktop closes better than beforeunload)
+  // Fire on tab hide (catches mobile + most desktop closes)
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) sendHeartbeat();
   });
 
   window.addEventListener('beforeunload', () => {
     if (!currentCode) return;
-    const duration = Math.round((Date.now() - SESSION_START) / 1000);
-    // Save to localStorage as fallback (sent on next page load)
-    try {
-      localStorage.setItem('bpc_pending_exit', JSON.stringify({
-        sessionId: SESSION_ID, code: currentCode,
-        duration, scrollDepth: maxScroll
-      }));
-    } catch(e) {}
-    // sendBeacon fails on GAS (302 redirect) — heartbeat + localStorage cover us
+    saveExitToStorage(Math.round((Date.now() - SESSION_START) / 1000));
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
