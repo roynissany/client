@@ -705,7 +705,7 @@
       delete window[cb];
     };
     const s = document.createElement('script');
-    s.src = `${SCRIPT_URL}?action=codes&callback=${cb}`;
+    s.src = `${SCRIPT_URL}?action=codes&callback=${cb}&_=${Date.now()}`;
     s.onerror = function() { delete window[cb]; };
     document.head.appendChild(s);
   })();
