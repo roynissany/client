@@ -99,6 +99,32 @@
   .use-count { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; }
   .last-used { font-size:12px; color:var(--muted); }
 
+  /* ── CHECKBOX ── */
+  .row-check { width:15px; height:15px; cursor:pointer; accent-color:var(--accent); flex-shrink:0; }
+  .th-check  { width:36px; padding-left:16px !important; }
+  .td-check  { padding-left:16px !important; }
+
+  /* ── BULK BAR ── */
+  .bulk-bar { display:none; background:rgba(67,126,209,.08); border:1px solid rgba(67,126,209,.25); border-radius:10px; padding:10px 16px; margin-bottom:12px; align-items:center; gap:10px; }
+  .bulk-bar.visible { display:flex; }
+  .bulk-count { font-size:13px; font-weight:600; color:#8dbde8; flex:1; }
+  .btn-danger-sm { padding:7px 14px; font-size:11px; font-weight:700; border-radius:7px; border:1px solid rgba(255,93,77,.4); background:transparent; color:var(--red); letter-spacing:.07em; text-transform:uppercase; cursor:pointer; transition:all .15s; }
+  .btn-danger-sm:hover { background:rgba(255,93,77,.1); border-color:var(--red); }
+  .bulk-clear { padding:4px 10px; font-size:11px; background:transparent; border:none; color:var(--muted); cursor:pointer; margin-left:auto; }
+  .bulk-clear:hover { color:var(--text); }
+
+  /* ── CODE DRILL-DOWN ── */
+  .drill-toggle { font-size:9px; color:var(--muted); margin-left:8px; user-select:none; display:inline-block; transition:transform .2s; }
+  .code-name-cell { cursor:pointer; }
+  .code-name-cell:hover .code-pill { background:rgba(67,126,209,.22); }
+  .code-drill { display:none; }
+  .code-drill.open { display:table-row; }
+  .code-drill > td { padding:0 16px 14px 52px; background:rgba(67,126,209,.03); border-bottom:1px solid var(--line); }
+  .mini-sessions { width:100%; border-collapse:collapse; margin-top:8px; }
+  .mini-sessions th { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); padding:5px 10px; text-align:left; border-bottom:1px solid var(--line); }
+  .mini-sessions td { font-size:12px; padding:7px 10px; color:var(--muted); border-bottom:1px solid rgba(255,255,255,.04); vertical-align:top; }
+  .mini-sessions tr:last-child td { border-bottom:none; }
+
   /* ── SESSIONS TABLE ── */
   .sessions-table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
   .sessions-table thead tr { border-bottom:1px solid var(--line-strong); }
@@ -354,29 +380,78 @@
   function renderCodes(codes) {
     const wrap = document.getElementById('codesWrap');
     if (!codes.length) { wrap.innerHTML = '<div class="empty">No codes yet.</div>'; return; }
+
+    const rows = codes.map(c => {
+      // Build drill-down mini session rows for this code
+      const codeSessions = allEvents.filter(e => e.event === 'login' && e.code === c.code);
+      let drillBody = '';
+      if (codeSessions.length) {
+        drillBody = codeSessions.slice(0, 25).map(s => {
+          const subs  = allEvents.filter(e => e.event !== 'login' && e.event !== 'exit' && e.session === s.session);
+          const chips = subs.map(ev => {
+            const lbl = EVENT_LABELS[ev.event] || ev.event;
+            const cls = ev.event === 'quote_request' ? 'quote' : 'info';
+            return `<span class="ev-chip ${cls}" style="font-size:10px;padding:2px 8px">${esc(lbl)}</span>`;
+          }).join('');
+          return `<tr>
+            <td style="color:var(--text)">${fmtDate(s.time)}</td>
+            <td>${[s.city, s.country].filter(Boolean).join(', ') || '—'}</td>
+            <td>${s.duration ? fmtDuration(s.duration) : '—'}</td>
+            <td>${s.scroll ? s.scroll + '%' : '—'}</td>
+            <td>${subs.length ? chips : '<span style="font-size:11px">None</span>'}</td>
+          </tr>`;
+        }).join('');
+      } else {
+        drillBody = `<tr><td colspan="5" style="text-align:center;padding:16px">No sessions yet</td></tr>`;
+      }
+
+      return `
+        <tr id="row-${CSS.escape(c.code)}" data-code="${esc(c.code)}">
+          <td class="td-check" onclick="event.stopPropagation()">
+            <input type="checkbox" class="row-check code-chk" value="${esc(c.code)}" onchange="updateBulkBar()">
+          </td>
+          <td class="code-name-cell" onclick="toggleCodeDrill('${esc(c.code)}')">
+            <span class="code-pill">${esc(c.code)}</span>
+            <span class="drill-toggle" id="dt-${CSS.escape(c.code)}">▶</span>
+          </td>
+          <td>${esc(c.label) || '<span style="color:var(--muted)">—</span>'}</td>
+          <td><span class="badge ${c.edit ? 'edit-yes' : 'edit-no'}">${c.edit ? 'Yes' : 'No'}</span></td>
+          <td><span class="badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Active' : 'Inactive'}</span></td>
+          <td><span class="use-count">${c.useCount || 0}</span></td>
+          <td><span class="last-used">${fmtDate(c.lastUsed)}</span></td>
+          <td>
+            <div class="row-actions">
+              <button class="row-btn" onclick="toggleCode('${esc(c.code)}')">${c.active ? 'Deactivate' : 'Activate'}</button>
+              <button class="row-btn danger" onclick="deleteCode('${esc(c.code)}')">Delete</button>
+            </div>
+          </td>
+        </tr>
+        <tr class="code-drill" id="drill-${CSS.escape(c.code)}">
+          <td colspan="8">
+            <table class="mini-sessions">
+              <thead><tr>
+                <th>Time</th><th>Location</th><th>Duration</th><th>Scroll</th><th>Activity</th>
+              </tr></thead>
+              <tbody>${drillBody}</tbody>
+            </table>
+          </td>
+        </tr>`;
+    }).join('');
+
     wrap.innerHTML = `
+      <div id="bulkBar" class="bulk-bar">
+        <span class="bulk-count" id="bulkCount">0 selected</span>
+        <button class="btn-sm btn-ghost" onclick="bulkDeactivate()">Deactivate Selected</button>
+        <button class="btn-danger-sm" onclick="bulkDelete()">Delete Selected</button>
+        <button class="bulk-clear" onclick="clearSelection()">✕ Clear</button>
+      </div>
       <table class="codes-table">
         <thead><tr>
+          <th class="th-check"><input type="checkbox" class="row-check" id="chkAll" onclick="selectAll(this.checked)"></th>
           <th>Code</th><th>Label</th><th>Edit</th><th>Status</th>
           <th>Uses</th><th>Last Used</th><th></th>
         </tr></thead>
-        <tbody>
-          ${codes.map(c => `
-          <tr id="row-${CSS.escape(c.code)}">
-            <td><span class="code-pill">${esc(c.code)}</span></td>
-            <td>${esc(c.label) || '<span style="color:var(--muted)">—</span>'}</td>
-            <td><span class="badge ${c.edit ? 'edit-yes' : 'edit-no'}">${c.edit ? 'Yes' : 'No'}</span></td>
-            <td><span class="badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Active' : 'Inactive'}</span></td>
-            <td><span class="use-count">${c.useCount || 0}</span></td>
-            <td><span class="last-used">${fmtDate(c.lastUsed)}</span></td>
-            <td>
-              <div class="row-actions">
-                <button class="row-btn" onclick="toggleCode('${esc(c.code)}')">${c.active ? 'Deactivate' : 'Activate'}</button>
-                <button class="row-btn danger" onclick="deleteCode('${esc(c.code)}')">Delete</button>
-              </div>
-            </td>
-          </tr>`).join('')}
-        </tbody>
+        <tbody>${rows}</tbody>
       </table>`;
   }
 
@@ -417,7 +492,7 @@
           <td style="color:var(--muted);font-size:12px">${[s.city, s.country].filter(Boolean).join(', ') || '—'}</td>
           <td style="font-size:12px;color:var(--muted)">${s.duration ? fmtDuration(s.duration) : '—'}</td>
           <td style="font-size:12px;color:var(--muted)">${s.scroll ? s.scroll + '%' : '—'}</td>
-          <td style="min-width:120px">${hasSubs ? chips : '<span style="color:var(--muted);font-size:11px">—</span>'}
+          <td style="min-width:120px">${hasSubs ? chips : '<span style="color:var(--muted);font-size:11px">None</span>'}
             <span class="session-toggle" style="margin-left:8px">▶</span>
           </td>
         </tr>
@@ -433,7 +508,8 @@
               <div class="detail-item"><strong>Language</strong><br>${s.lang || '—'}</div>
               <div class="detail-item"><strong>Referrer</strong><br>${esc(s.referrer || '—')}</div>
             </div>
-            ${hasSubs ? `<div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Activity</div><div class="detail-events">${chips}</div>` : ''}
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Activity</div>
+            <div class="detail-events">${hasSubs ? chips : '<span style="font-size:12px;color:var(--muted)">None</span>'}</div>
           </td>
         </tr>`;
     });
@@ -480,8 +556,15 @@
         if (tbody) {
           const tr = document.createElement('tr');
           tr.id = 'row-' + CSS.escape(code);
+          tr.setAttribute('data-code', code);
           tr.innerHTML = `
-            <td><span class="code-pill">${esc(code)}</span></td>
+            <td class="td-check" onclick="event.stopPropagation()">
+              <input type="checkbox" class="row-check code-chk" value="${esc(code)}" onchange="updateBulkBar()">
+            </td>
+            <td class="code-name-cell" onclick="toggleCodeDrill('${esc(code)}')">
+              <span class="code-pill">${esc(code)}</span>
+              <span class="drill-toggle" id="dt-${CSS.escape(code)}">▶</span>
+            </td>
             <td>${esc(label) || '<span style="color:var(--muted)">—</span>'}</td>
             <td><span class="badge ${editPerm ? 'edit-yes' : 'edit-no'}">${editPerm ? 'Yes' : 'No'}</span></td>
             <td><span class="badge active">Active</span></td>
@@ -493,7 +576,13 @@
                 <button class="row-btn danger" onclick="deleteCode('${esc(code)}')">Delete</button>
               </div>
             </td>`;
+          // Also add an empty drill row
+          const drillTr = document.createElement('tr');
+          drillTr.className = 'code-drill';
+          drillTr.id = 'drill-' + CSS.escape(code);
+          drillTr.innerHTML = `<td colspan="8"><table class="mini-sessions"><thead><tr><th>Time</th><th>Location</th><th>Duration</th><th>Scroll</th><th>Activity</th></tr></thead><tbody><tr><td colspan="5" style="text-align:center;padding:16px">No sessions yet</td></tr></tbody></table></td>`;
           tbody.appendChild(tr);
+          tbody.appendChild(drillTr);
         } else {
           loadData(); // fallback if table doesn't exist yet
         }
@@ -527,11 +616,82 @@
   // ── DELETE CODE ───────────────────────────────────────────────
   function deleteCode(code) {
     if (!confirm(`Delete code "${code}"? This cannot be undone.`)) return;
-    const row = document.getElementById('row-' + CSS.escape(code));
-    if (row) row.remove(); // Optimistic: remove from DOM immediately
+    const row   = document.getElementById('row-' + CSS.escape(code));
+    const drill = document.getElementById('drill-' + CSS.escape(code));
+    if (row)   row.remove();
+    if (drill) drill.remove();
     jsonp({ action: 'deleteCode', key: adminKey, code }, d => {
-      if (!d.ok && row) loadData(); // revert on failure
+      if (!d.ok) loadData(); // revert on failure
     });
+  }
+
+  // ── CODE DRILL-DOWN ───────────────────────────────────────────
+  function toggleCodeDrill(code) {
+    const drill  = document.getElementById('drill-' + CSS.escape(code));
+    const toggle = document.getElementById('dt-' + CSS.escape(code));
+    if (!drill) return;
+    const isOpen = drill.classList.contains('open');
+    drill.classList.toggle('open', !isOpen);
+    if (toggle) toggle.style.transform = isOpen ? '' : 'rotate(90deg)';
+  }
+
+  // ── BULK OPERATIONS ───────────────────────────────────────────
+  function updateBulkBar() {
+    const selected = document.querySelectorAll('.code-chk:checked');
+    const all      = document.querySelectorAll('.code-chk');
+    const bar      = document.getElementById('bulkBar');
+    const count    = document.getElementById('bulkCount');
+    const chkAll   = document.getElementById('chkAll');
+    if (!bar) return;
+    bar.classList.toggle('visible', selected.length > 0);
+    if (count) count.textContent = selected.length + ' selected';
+    if (chkAll) {
+      chkAll.indeterminate = selected.length > 0 && selected.length < all.length;
+      chkAll.checked = all.length > 0 && selected.length === all.length;
+    }
+  }
+
+  function selectAll(checked) {
+    document.querySelectorAll('.code-chk').forEach(cb => cb.checked = checked);
+    updateBulkBar();
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.code-chk').forEach(cb => cb.checked = false);
+    const chkAll = document.getElementById('chkAll');
+    if (chkAll) { chkAll.checked = false; chkAll.indeterminate = false; }
+    updateBulkBar();
+  }
+
+  function getSelectedCodes() {
+    return Array.from(document.querySelectorAll('.code-chk:checked')).map(cb => cb.value);
+  }
+
+  function bulkDeactivate() {
+    const codes = getSelectedCodes().filter(code => {
+      const row = document.getElementById('row-' + CSS.escape(code));
+      return row && row.querySelector('.badge.active');
+    });
+    if (!codes.length) { alert('No active codes in selection.'); return; }
+    codes.forEach(code => toggleCode(code));
+    clearSelection();
+  }
+
+  function bulkDelete() {
+    const codes = getSelectedCodes();
+    if (!codes.length) return;
+    if (!confirm(`Delete ${codes.length} code(s)? This cannot be undone.`)) return;
+    // Call individually but skip the per-code confirm (already confirmed above)
+    codes.forEach(code => {
+      const row   = document.getElementById('row-' + CSS.escape(code));
+      const drill = document.getElementById('drill-' + CSS.escape(code));
+      if (row)   row.remove();
+      if (drill) drill.remove();
+      jsonp({ action: 'deleteCode', key: adminKey, code }, d => {
+        if (!d.ok) loadData();
+      });
+    });
+    clearSelection();
   }
 
   // ── UTILS ─────────────────────────────────────────────────────
