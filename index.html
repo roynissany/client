@@ -564,7 +564,7 @@
   const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec';
   const TRACKING_URL = SCRIPT_URL; // same endpoint handles tracking
   const SESSION_ID    = Math.random().toString(36).substr(2, 9);
-  const SESSION_START  = Date.now();
+  let   SESSION_START  = Date.now();
   let   currentCode    = '';
   let   maxScroll      = 0;
   let   heartbeatTimer = null;
@@ -689,6 +689,13 @@
   window.addEventListener('beforeunload', () => {
     if (!currentCode) return;
     saveExitToStorage(Math.round((Date.now() - SESSION_START) / 1000));
+  });
+
+  // Reset session timer when tab is restored from bfcache (back/forward navigation).
+  // Without this, SESSION_START would still be from the original page load,
+  // making a "few seconds" revisit look like a multi-minute session.
+  window.addEventListener('pageshow', e => {
+    if (e.persisted) SESSION_START = Date.now();
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
