@@ -699,38 +699,26 @@
   });
 
   // ── AUTH ─────────────────────────────────────────────────────
-  let ACCESS_CODES = {}; // populated via fetch() from Apps Script on load
-  let codesReady   = false;
-  let onCodesReady = null; // queued action (unlock or auto-login) waiting for codes
-  const SESSION_KEY  = 'bpc_session';
-  const SESSION_TTL  = 3 * 24 * 60 * 60 * 1000; // 3 days
+  const SESSION_KEY = 'bpc_session';
+  const SESSION_TTL = 3 * 24 * 60 * 60 * 1000; // 3 days
 
-  // Fetch live codes from Apps Script via fetch() (CORS-safe, works in all browsers)
-  function loadCodes() {
-    fetch(`${SCRIPT_URL}?action=codes&_=${Date.now()}`)
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (d.codes) {
-          ACCESS_CODES = d.codes;
-          codesReady   = true;
-          if (onCodesReady) { var fn = onCodesReady; onCodesReady = null; fn(); }
-        }
-      })
-      .catch(function() {
-        setTimeout(loadCodes, 3000);
-      });
+  // Pre-fetch client IP in the background for brute-force tracking
+  let cachedIp = '';
+  fetch('https://ipapi.co/json/').then(r => r.json()).then(d => { cachedIp = d.ip || ''; }).catch(() => {});
+
+  function showErr(msg) {
+    const el = document.getElementById('pwErr');
+    el.innerHTML = msg || 'Code not recognised. Contact <a href="mailto:info@balatonparkcircuit.com" style="color:#8dbde8">info@balatonparkcircuit.com</a>';
+    el.style.display = msg === null ? 'none' : 'block';
   }
-  loadCodes();
 
-  function applyLogin(code, track) {
-    const role = ACCESS_CODES[code];
+  function applyLogin(code, role, track) {
     currentCode = code;
     document.getElementById('gate').style.display = 'none';
     document.getElementById('navBtns').classList.add('active');
     document.getElementById('editBtn').style.display = role.edit ? '' : 'none';
     document.getElementById('app').classList.add('active');
-    const label = role.label || '';
-    document.getElementById('clientLabel').textContent = label;
+    document.getElementById('clientLabel').textContent = role.label || '';
     document.title = 'Balaton Park - Client Hub';
     if (track) trackLogin(code);
     startHeartbeat();
@@ -738,21 +726,30 @@
     initTitleObserver();
   }
 
-  function unlock() {
+  async function unlock() {
     const v = document.getElementById('pwInput').value.trim();
     if (!v) return;
-    if (!codesReady) {
-      // Codes still loading — queue this attempt and show a hint
-      onCodesReady = unlock;
-      document.getElementById('pwErr').style.display = 'none';
-      document.getElementById('accessBtn').textContent = 'LOADING…';
-      return;
+    const btn = document.getElementById('accessBtn');
+    btn.textContent = 'CHECKING…';
+    btn.disabled = true;
+    showErr(null);
+    try {
+      const r = await fetch(`${SCRIPT_URL}?action=validate&code=${encodeURIComponent(v)}&ip=${encodeURIComponent(cachedIp)}&_=${Date.now()}`).then(r => r.json());
+      if (r.blocked) {
+        showErr('Too many failed attempts. Please try again later.');
+      } else if (r.ok) {
+        const role = { edit: r.edit, label: r.label };
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ code: v, role, ts: Date.now() }));
+        applyLogin(v, role, true);
+      } else {
+        showErr(null); // default "code not recognised" message
+        document.getElementById('pwErr').style.display = 'block';
+      }
+    } catch(e) {
+      showErr('Connection error. Please try again.');
     }
-    document.getElementById('accessBtn').textContent = 'ACCESS';
-    const role = ACCESS_CODES[v];
-    if (!role) { document.getElementById('pwErr').style.display = 'block'; return; }
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ code: v, ts: Date.now() }));
-    applyLogin(v, true);
+    btn.textContent = 'ACCESS';
+    btn.disabled = false;
   }
 
   document.getElementById('pwInput').addEventListener('keydown', e => {
@@ -776,15 +773,15 @@
 
   // ── AUTO-LOGIN ────────────────────────────────────────────────
   (function() {
-    function tryAutoLogin() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-        if (!saved || (Date.now() - saved.ts) >= SESSION_TTL) return;
-        if (!codesReady) { onCodesReady = tryAutoLogin; return; }
-        if (ACCESS_CODES[saved.code]) applyLogin(saved.code, false);
-      } catch(e) {}
-    }
-    tryAutoLogin();
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (!saved || !saved.role || (Date.now() - saved.ts) >= SESSION_TTL) return;
+      // Instant login using stored role
+      applyLogin(saved.code, saved.role, false);
+      // Background re-validate — signs out silently if code was deactivated
+      fetch(`${SCRIPT_URL}?action=validate&code=${encodeURIComponent(saved.code)}&ip=${encodeURIComponent(cachedIp)}&_=${Date.now()}`)
+        .then(r => r.json()).then(r => { if (!r.ok) signOut(); }).catch(() => {});
+    } catch(e) {}
   })();
 
   // ── FIXED TITLE ───────────────────────────────────────────────
