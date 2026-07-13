@@ -747,41 +747,10 @@
       d => {
         if (d.error === 'duplicate') { errEl.textContent = 'Code already exists.'; errEl.style.display = 'block'; return; }
         if (d.error) { errEl.textContent = 'Error: ' + d.error; errEl.style.display = 'block'; return; }
-        // Optimistic: inject new row into table without full reload
-        const tbody = document.querySelector('.codes-table tbody');
-        if (tbody) {
-          const tr = document.createElement('tr');
-          tr.id = 'row-' + CSS.escape(code);
-          tr.setAttribute('data-code', code);
-          tr.innerHTML = `
-            <td class="td-check" onclick="event.stopPropagation()">
-              <input type="checkbox" class="row-check code-chk" value="${esc(code)}" onchange="updateBulkBar()">
-            </td>
-            <td class="code-name-cell" onclick="toggleCodeDrill('${esc(code)}')">
-              <span class="code-pill">${esc(code)}</span>
-              <span class="drill-toggle" id="dt-${CSS.escape(code)}">▶</span>
-            </td>
-            <td>${esc(label) || '<span style="color:var(--muted)">—</span>'}</td>
-            <td><span class="badge ${editPerm ? 'edit-yes' : 'edit-no'}">${editPerm ? 'Yes' : 'No'}</span></td>
-            <td><span class="badge active">Active</span></td>
-            <td><span class="use-count">0</span></td>
-            <td><span class="last-used">—</span></td>
-            <td>
-              <div class="row-actions">
-                <button class="row-btn" onclick="toggleCode('${esc(code)}')">Deactivate</button>
-                <button class="row-btn danger" onclick="deleteCode('${esc(code)}')">Delete</button>
-              </div>
-            </td>`;
-          // Also add an empty drill row
-          const drillTr = document.createElement('tr');
-          drillTr.className = 'code-drill';
-          drillTr.id = 'drill-' + CSS.escape(code);
-          drillTr.innerHTML = `<td colspan="8"><table class="mini-sessions"><thead><tr><th>Time</th><th>Location</th><th>Duration</th><th>Scroll</th><th>Activity</th></tr></thead><tbody><tr><td colspan="5" style="text-align:center;padding:16px">No sessions yet</td></tr></tbody></table></td>`;
-          tbody.appendChild(tr);
-          tbody.appendChild(drillTr);
-        } else {
-          loadData(); // fallback if table doesn't exist yet
-        }
+        // Add to cache and re-render
+        allCodesCache.unshift({ code, label, edit: editPerm, active: true, created: new Date().toISOString(), useCount: 0, lastUsed: '' });
+        codesPage = 1;
+        renderCodes(allCodesCache);
         document.getElementById('newCode').value = '';
         document.getElementById('newLabel').value = '';
         editPerm = false;
