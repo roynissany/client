@@ -12,8 +12,17 @@
 //   6. Copy the deployment URL into index.html and admin.html
 // ═══════════════════════════════════════════════════════════════
 
-const SHEET_ID  = '1j6Z5asITjHty6mr_4-3D2baV7xh0uJSX76HMvPoik3E';
-const ADMIN_KEY = 'Hagbierez1!';
+const SHEET_ID = '1j6Z5asITjHty6mr_4-3D2baV7xh0uJSX76HMvPoik3E';
+
+const ADMINS = {
+  'roy':   { password: 'Hagbierez1!',          canGrantEdit: true  },
+  'pisti': { password: 'hjkdfhk5!jrngk2Hgierh3', canGrantEdit: false },
+};
+
+function isAdmin(user, key) {
+  const a = ADMINS[String(user || '').toLowerCase()];
+  return !!(a && a.password === String(key || ''));
+}
 
 // ── Sheet column indexes (0-based) ───────────────────────────
 const C = {
@@ -25,6 +34,7 @@ const C = {
   CREATED:    4,
   USE_COUNT:  5,
   LAST_USED:  6,
+  CREATED_BY: 7,
 
   // Events sheet
   EV_TIME:    0,
@@ -81,7 +91,8 @@ function doGet(e) {
   if (action === 'heartbeat')  return logExitGet(e.parameter, cb); // periodic update, same logic as exit
   if (action === 'event')      return logEventGet(e.parameter, cb);
 
-  if (key !== ADMIN_KEY) return respond({ error: 'unauthorized' }, cb);
+  const user = (e.parameter.user || '').toLowerCase();
+  if (!isAdmin(user, key)) return respond({ error: 'unauthorized' }, cb);
 
   if (action === 'analytics')     return serveAnalytics(cb);
   if (action === 'addCode')       return addCode(e.parameter, cb);
@@ -128,13 +139,17 @@ function validateCode(p, cb) {
 
 // ── Admin login with brute-force guard ───────────────────────
 function adminLogin(p, cb) {
-  const ip = String(p.ip || 'unknown').slice(0, 64);
+  const ip   = String(p.ip   || 'unknown').slice(0, 64);
+  const user = String(p.user || '').toLowerCase();
   const failSheet = getOrCreateSheet('Failures');
   const cutoff    = new Date(Date.now() - 60 * 60 * 1000);
   const failRows  = failSheet.getDataRange().getValues().slice(1)
     .filter(r => String(r[0]) === 'adm_' + ip && r[1] && new Date(r[1]) >= cutoff);
   if (failRows.length >= 5) return respond({ ok: false, blocked: true }, cb);
-  if (String(p.key) === ADMIN_KEY) return respond({ ok: true }, cb);
+  const admin = ADMINS[user];
+  if (admin && admin.password === String(p.key || '')) {
+    return respond({ ok: true, username: user, canGrantEdit: admin.canGrantEdit }, cb);
+  }
   failSheet.appendRow(['adm_' + ip, new Date(), '']);
   return respond({ ok: false }, cb);
 }
@@ -171,9 +186,10 @@ function serveAnalytics(cb) {
     label:     row[C.LABEL],
     edit:      row[C.EDIT] === true || row[C.EDIT] === 'TRUE',
     active:    row[C.ACTIVE] === true || row[C.ACTIVE] === 'TRUE',
-    created:   row[C.CREATED] ? new Date(row[C.CREATED]).toISOString() : '',
-    useCount:  row[C.USE_COUNT] || 0,
-    lastUsed:  row[C.LAST_USED] ? new Date(row[C.LAST_USED]).toISOString() : '',
+    created:   row[C.CREATED]    ? new Date(row[C.CREATED]).toISOString() : '',
+    useCount:  row[C.USE_COUNT]  || 0,
+    lastUsed:  row[C.LAST_USED]  ? new Date(row[C.LAST_USED]).toISOString() : '',
+    createdBy: row[C.CREATED_BY] || '',
   }));
 
   const events = eventRows.map(row => ({
@@ -343,6 +359,7 @@ function addCode(d, cb) {
     new Date(),
     0,
     '',
+    d.createdBy || '',
   ]);
   return respond({ ok: true }, cb);
 }
