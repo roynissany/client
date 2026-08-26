@@ -233,7 +233,7 @@
             <label>Label (who is this for?)</label>
             <input id="newLabel" class="form-input wide" type="text" placeholder="e.g. Ferrari Team">
           </div>
-          <div class="form-group">
+          <div class="form-group" id="editPermGroup">
             <label>Permissions</label>
             <div class="toggle-wrap">
               <button class="toggle" id="editToggle" onclick="toggleEditPerm()"></button>
@@ -272,8 +272,10 @@
 <script>
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIb8KNEhmDBoCNF0dVKIqN8iTI6IdgJWhI7tsApp9smDVK2L9Cd3kmlEisGp6LN3vFUg/exec';
   const ADMIN_KEY_STORE = 'bpc_admin_key';
-  let adminKey = '';
-  let editPerm = false;
+  let adminKey      = '';
+  let adminUsername = '';
+  let canGrantEdit  = false;
+  let editPerm      = false;
   let cachedIp = '';
   fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>{cachedIp=d.ip||'';}).catch(()=>{});
 
@@ -298,19 +300,27 @@
     const v    = document.getElementById('keyInput').value.trim();
     const err  = document.getElementById('gateErr');
     err.style.display = 'none';
-    if (user !== 'roy') { err.textContent = 'Invalid credentials.'; err.style.display = 'block'; return; }
-    if (!v) return;
+    if (!user || !v) return;
     try {
-      const r = await fetch(`${SCRIPT_URL}?action=adminLogin&key=${encodeURIComponent(v)}&ip=${encodeURIComponent(cachedIp)}&_=${Date.now()}`).then(r => r.json());
+      const r = await fetch(`${SCRIPT_URL}?action=adminLogin&user=${encodeURIComponent(user)}&key=${encodeURIComponent(v)}&ip=${encodeURIComponent(cachedIp)}&_=${Date.now()}`).then(r => r.json());
       if (r.blocked) { err.textContent = 'Too many attempts. Try again later.'; err.style.display = 'block'; return; }
       if (!r.ok)     { err.textContent = 'Invalid credentials.';                err.style.display = 'block'; return; }
-      adminKey = v;
-      sessionStorage.setItem(ADMIN_KEY_STORE, v);
+      adminKey      = v;
+      adminUsername = r.username;
+      canGrantEdit  = r.canGrantEdit;
+      sessionStorage.setItem(ADMIN_KEY_STORE,     v);
+      sessionStorage.setItem('bpc_admin_user',    r.username);
+      sessionStorage.setItem('bpc_admin_cge',     r.canGrantEdit ? '1' : '0');
+      applyAdminPerms();
       loadData();
     } catch(e) {
       err.textContent = 'Connection error. Please try again.';
       err.style.display = 'block';
     }
+  }
+
+  function applyAdminPerms() {
+    document.getElementById('editPermGroup').style.display = canGrantEdit ? '' : 'none';
   }
 
   document.getElementById('userInput').addEventListener('keydown', e => {
@@ -321,8 +331,10 @@
   });
 
   function signOut() {
-    adminKey = '';
+    adminKey = ''; adminUsername = ''; canGrantEdit = false;
     sessionStorage.removeItem(ADMIN_KEY_STORE);
+    sessionStorage.removeItem('bpc_admin_user');
+    sessionStorage.removeItem('bpc_admin_cge');
     document.getElementById('app').classList.remove('active');
     document.getElementById('gate').style.display = 'flex';
     document.getElementById('userInput').value = '';
@@ -332,13 +344,19 @@
   // Auto-restore session
   window.addEventListener('DOMContentLoaded', () => {
     const saved = sessionStorage.getItem(ADMIN_KEY_STORE);
-    if (saved) { adminKey = saved; loadData(); }
+    if (saved) {
+      adminKey      = saved;
+      adminUsername = sessionStorage.getItem('bpc_admin_user') || '';
+      canGrantEdit  = sessionStorage.getItem('bpc_admin_cge') === '1';
+      applyAdminPerms();
+      loadData();
+    }
   });
 
   // ── DATA ─────────────────────────────────────────────────────
   function loadData() {
     jsonp(
-      { action: 'analytics', key: adminKey },
+      { action: 'analytics', key: adminKey, user: adminUsername },
       d => { if (!d.error) showApp(d); },
       console.error
     );
@@ -505,6 +523,7 @@
           <td><span class="badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Active' : 'Inactive'}</span></td>
           <td><span class="use-count">${c.useCount || 0}</span></td>
           <td><span class="last-used">${fmtDate(c.lastUsed)}</span></td>
+          <td style="font-size:12px;color:var(--muted)">${esc(c.createdBy || '—')}</td>
           <td>
             <div class="row-actions">
               <button class="row-btn" onclick="toggleCode('${esc(c.code)}')">${c.active ? 'Deactivate' : 'Activate'}</button>
@@ -545,6 +564,7 @@
           <th>Label</th><th>Edit</th><th>Status</th>
           <th onclick="sortCodesBy('uses')" style="cursor:pointer;user-select:none">Uses ${codesSort==='uses' ? (codesSortDir===-1?'↓':'↑') : '<span style="opacity:.3">↕</span>'}</th>
           <th onclick="sortCodesBy('lastUsed')" style="cursor:pointer;user-select:none">Last Used ${codesSort==='lastUsed' ? (codesSortDir===-1?'↓':'↑') : '<span style="opacity:.3">↕</span>'}</th>
+          <th>Admin</th>
           <th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -720,7 +740,7 @@
 
     // Fire backend deletes
     sessionIds.forEach(sessionId => {
-      jsonp({ action: 'deleteSession', key: adminKey, sessionId }, d => {
+      jsonp({ action: 'deleteSession', key: adminKey, user: adminUsername, sessionId }, d => {
         if (!d.ok) loadData(); // revert on failure
       });
     });
@@ -743,12 +763,12 @@
     if (!code) { errEl.textContent = 'Code cannot be empty.'; errEl.style.display = 'block'; return; }
     errEl.style.display = 'none';
     jsonp(
-      { action: 'addCode', key: adminKey, code, label, edit: editPerm },
+      { action: 'addCode', key: adminKey, user: adminUsername, code, label, edit: editPerm, createdBy: adminUsername },
       d => {
         if (d.error === 'duplicate') { errEl.textContent = 'Code already exists.'; errEl.style.display = 'block'; return; }
         if (d.error) { errEl.textContent = 'Error: ' + d.error; errEl.style.display = 'block'; return; }
         // Add to cache and re-render
-        allCodesCache.unshift({ code, label, edit: editPerm, active: true, created: new Date().toISOString(), useCount: 0, lastUsed: '' });
+        allCodesCache.unshift({ code, label, edit: editPerm, active: true, created: new Date().toISOString(), useCount: 0, lastUsed: '', createdBy: adminUsername });
         codesPage = 1;
         renderCodes(allCodesCache);
         document.getElementById('newCode').value = '';
@@ -770,7 +790,7 @@
     // Optimistic update
     if (badge) { badge.textContent = isActive ? 'Inactive' : 'Active'; badge.className = 'badge ' + (isActive ? 'inactive' : 'active'); }
     if (btn)   { btn.textContent = isActive ? 'Activate' : 'Deactivate'; }
-    jsonp({ action: 'toggleCode', key: adminKey, code }, d => {
+    jsonp({ action: 'toggleCode', key: adminKey, user: adminUsername, code }, d => {
       if (!d.ok) { // revert on failure
         if (badge) { badge.textContent = isActive ? 'Active' : 'Inactive'; badge.className = 'badge ' + (isActive ? 'active' : 'inactive'); }
         if (btn)   { btn.textContent = isActive ? 'Deactivate' : 'Activate'; }
@@ -785,7 +805,7 @@
     const drill = document.getElementById('drill-' + CSS.escape(code));
     if (row)   row.remove();
     if (drill) drill.remove();
-    jsonp({ action: 'deleteCode', key: adminKey, code }, d => {
+    jsonp({ action: 'deleteCode', key: adminKey, user: adminUsername, code }, d => {
       if (!d.ok) loadData(); // revert on failure
     });
   }
@@ -852,7 +872,7 @@
       const drill = document.getElementById('drill-' + CSS.escape(code));
       if (row)   row.remove();
       if (drill) drill.remove();
-      jsonp({ action: 'deleteCode', key: adminKey, code }, d => {
+      jsonp({ action: 'deleteCode', key: adminKey, user: adminUsername, code }, d => {
         if (!d.ok) loadData();
       });
     });
