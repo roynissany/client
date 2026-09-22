@@ -218,6 +218,28 @@
   .img-strip-label { position:absolute; bottom:20px; left:24px; z-index:2; font-size:10px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.45); }
   .hotel-btn { display:inline-block; padding:14px 36px; background:#2d5fa8; color:#fff; font-size:0.95rem; font-weight:700; border-radius:8px; text-decoration:none; letter-spacing:.04em; font-family:'Rajdhani',sans-serif; text-transform:uppercase; transition:background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease; }
   .hotel-btn:hover { background:#1e4a8a; box-shadow:0 6px 20px rgba(30,74,138,0.45); transform:translateY(-2px); }
+  /* Hotel hero + gallery */
+  .hotel-hero { position:relative; overflow:hidden; border-radius:16px; margin:60px 0 0; min-height:280px; }
+  .hotel-hero video { position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0.32;pointer-events:none; }
+  .hotel-hero-overlay { position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,10,18,0.82) 0%,rgba(10,10,18,0.55) 100%); }
+  .hotel-hero-content { position:relative;z-index:1;padding:52px 48px 44px; }
+  .hotel-gallery-wrap { position:relative;margin:20px 0 60px; }
+  .hotel-gallery { display:flex;gap:14px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:4px; }
+  .hotel-gallery::-webkit-scrollbar { display:none; }
+  .hotel-slide { flex-shrink:0;width:440px;height:290px;position:relative;border-radius:12px;overflow:hidden;cursor:pointer; }
+  .hotel-slide img { width:100%;height:100%;object-fit:cover;transition:transform .35s ease; }
+  .hotel-slide:hover img { transform:scale(1.04); }
+  .gallery-caption { position:absolute;bottom:0;left:0;right:0;padding:14px 16px 12px;background:linear-gradient(transparent,rgba(0,0,0,0.72));font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#fff; }
+  .gallery-btn { position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(10,10,18,0.82);border:1px solid rgba(255,255,255,0.18);color:#fff;font-size:24px;line-height:1;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;transition:background .2s; }
+  .gallery-btn:hover { background:var(--accent); }
+  .gallery-prev { left:-22px; }
+  .gallery-next { right:-22px; }
+  /* Track layouts */
+  .layouts-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:0; }
+  .layout-card { background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;text-align:center; }
+  .layout-card img { width:100%;display:block; }
+  .layout-card-label { padding:12px 0;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text); }
+  @media(max-width:640px){ .layouts-grid{grid-template-columns:1fr;} .hotel-slide{width:88vw;} .hotel-hero-content{padding:36px 24px 32px;} .gallery-prev{left:-10px;} .gallery-next{right:-10px;} }
   /* ─── DOCS ─── */
   .docs-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   @media(max-width:680px) { .docs-grid { grid-template-columns:1fr; } }
@@ -365,6 +387,26 @@
     <div class="img-strip reveal" style="height:320px;">
       <img src="grandstand-strip.jpg" alt="Grandstand" style="object-position:center 50%;">
       <div class="img-strip-overlay"></div>
+    </div>
+
+    <!-- TRACK LAYOUTS -->
+    <div class="section-header reveal">
+      <h2>Track Layouts</h2>
+      <p>Available configurations for your event.</p>
+    </div>
+    <div class="layouts-grid reveal">
+      <div class="layout-card">
+        <img src="layout-A.jpg" alt="Layout A">
+        <div class="layout-card-label">Layout A</div>
+      </div>
+      <div class="layout-card">
+        <img src="layout-B.jpg" alt="Layout B">
+        <div class="layout-card-label">Layout B</div>
+      </div>
+      <div class="layout-card">
+        <img src="layout-C.jpg" alt="Layout C">
+        <div class="layout-card-label">Layout C</div>
+      </div>
     </div>
 
     <!-- ADDITIONAL ITEMS -->
@@ -540,21 +582,36 @@
     </div>
 
     <!-- HOTEL -->
-    <div class="img-strip reveal">
-      <img src="hotel-room.jpg" alt="Balaton Park Hotel Room" style="object-position:center 50%;">
-      <div class="img-strip-overlay"></div>
+    <div class="hotel-hero reveal">
+      <video autoplay muted loop playsinline>
+        <source src="hotel-bg.mp4" type="video/mp4">
+      </video>
+      <div class="hotel-hero-overlay"></div>
+      <div class="hotel-hero-content">
+        <h2 style="font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;margin:0 0 6px;letter-spacing:0.02em;" data-edit>Balaton Park Hotel</h2>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 18px;" data-edit>Stay IN the paddock. Luxury within a few steps from the action.</p>
+        <p style="color:rgba(170,170,184,0.85);line-height:1.75;font-size:14px;margin:0 0 28px;max-width:580px;" data-edit>Over 130 luxurious rooms attached to the paddock. Teams, drivers and VIPs stay at a 1-min walk. Lavender Park Restaurant serves high-end meals around the clock including room-service and even box-garage service.</p>
+        <a href="https://www.balatonparkhotel.com" target="_blank" rel="noopener" class="hotel-btn" onclick="trackEvent('hotel_click')">Show Me More ↗</a>
+      </div>
     </div>
 
-    <div class="section-header reveal">
-      <h2 data-edit>Balaton Park Hotel</h2>
-      <p data-edit>Stay IN the paddock. Luxury within a few steps from the action.</p>
+    <!-- HOTEL GALLERY -->
+    <div class="hotel-gallery-wrap reveal">
+      <button class="gallery-btn gallery-prev" onclick="hotelGallery(-1)" aria-label="Previous">&#8249;</button>
+      <div class="hotel-gallery" id="hotelGallery">
+        <div class="hotel-slide"><img src="hotel-room.jpg" alt="Track-View Suite" style="object-position:center 40%;"><div class="gallery-caption">Track-View Suite</div></div>
+        <div class="hotel-slide"><img src="hotel-g-01.jpg" alt="The Grand Lobby"><div class="gallery-caption">The Grand Lobby</div></div>
+        <div class="hotel-slide"><img src="hotel-g-02.jpg" alt="Lobby & Common Areas"><div class="gallery-caption">Lobby & Common Areas</div></div>
+        <div class="hotel-slide"><img src="hotel-g-03.jpg" alt="Lavender in the Park"><div class="gallery-caption">Lavender in the Park</div></div>
+        <div class="hotel-slide"><img src="hotel-g-04.jpg" alt="Deluxe Suite"><div class="gallery-caption">Deluxe Suite</div></div>
+        <div class="hotel-slide"><img src="hotel-g-05.jpg" alt="Trackside Terrace"><div class="gallery-caption">Trackside Terrace</div></div>
+        <div class="hotel-slide"><img src="hotel-g-06.jpg" alt="Luxury in Every Detail"><div class="gallery-caption">Luxury in Every Detail</div></div>
+        <div class="hotel-slide"><img src="hotel-g-07.jpg" alt="The Circuit at Dusk"><div class="gallery-caption">The Circuit at Dusk</div></div>
+        <div class="hotel-slide"><img src="hotel-g-08.jpg" alt="Lavender Park Restaurant"><div class="gallery-caption">Lavender Park Restaurant</div></div>
+        <div class="hotel-slide"><img src="hotel-g-09.jpg" alt="Fine Dining, Track-Side" style="object-position:center top;"><div class="gallery-caption">Fine Dining, Track-Side</div></div>
+      </div>
+      <button class="gallery-btn gallery-next" onclick="hotelGallery(1)" aria-label="Next">&#8250;</button>
     </div>
-    <p class="reveal" style="color:var(--muted);line-height:1.75;font-size:14px;margin:0 0 28px;" data-edit>
-      Over 130 luxurious rooms attached to the paddock. Teams, drivers and VIPs stay at a 1-min walk. Lavender Park Restaurant serves high-end meals around the clock including room-service and even box-garage service.
-    </p>
-    <a href="https://www.balatonparkhotel.com" target="_blank" rel="noopener" class="reveal hotel-btn" style="margin-bottom:60px;" onclick="trackEvent('hotel_click')">
-      Show Me More ↗
-    </a>
 
     <!-- BOOKING PROCESS -->
     <div class="section-header reveal" style="margin-top:60px;">
@@ -736,6 +793,11 @@
   function trackEvent(type) {
     if (!currentCode) return;
     gasGet(`action=event&sessionId=${encodeURIComponent(SESSION_ID)}&code=${encodeURIComponent(currentCode)}&type=${encodeURIComponent(type)}`);
+  }
+
+  function hotelGallery(dir) {
+    const el = document.getElementById('hotelGallery');
+    if (el) el.scrollBy({ left: dir * 460, behavior: 'smooth' });
   }
 
   // ── HEARTBEAT — fires every 60s after login ──────────────────
