@@ -898,6 +898,16 @@
     if (e.key === 'Enter') unlock();
   });
 
+  // Auto-fill + submit if ?code= is in the URL
+  (function() {
+    const urlCode = new URLSearchParams(location.search).get('code');
+    if (urlCode) {
+      document.getElementById('pwInput').value = urlCode;
+      // Small delay so the page renders before the fetch kicks off
+      setTimeout(unlock, 200);
+    }
+  })();
+
   function signOut() {
     currentCode = '';
     clearInterval(heartbeatTimer); heartbeatTimer = null;
