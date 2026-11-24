@@ -14,14 +14,31 @@
 
 const SHEET_ID = '1j6Z5asITjHty6mr_4-3D2baV7xh0uJSX76HMvPoik3E';
 
+// Admin accounts. Passwords are NOT stored here - they live in Script
+// Properties, so this file can sit in a repo without leaking anything.
+//   Apps Script -> Project Settings -> Script Properties
+//   ADMIN_PW_ROY    = <roy's new password>
+//   ADMIN_PW_PISTI  = <pisti's new password>
 const ADMINS = {
-  'roy':   { password: '***REMOVED***',          canGrantEdit: true  },
-  'pisti': { password: '***REMOVED***', canGrantEdit: false },
+  'roy':   { canGrantEdit: true  },
+  'pisti': { canGrantEdit: false },
 };
 
+function adminPassword(user) {
+  const key = 'ADMIN_PW_' + String(user || '').toUpperCase().replace(/[^A-Z0-9_]/g, '');
+  return PropertiesService.getScriptProperties().getProperty(key) || '';
+}
+
+// A missing or empty property must never let an empty submission through.
+function passwordMatches(user, supplied) {
+  const want = adminPassword(user);
+  const got  = String(supplied || '');
+  return want.length > 0 && want === got;
+}
+
 function isAdmin(user, key) {
-  const a = ADMINS[String(user || '').toLowerCase()];
-  return !!(a && a.password === String(key || ''));
+  const u = String(user || '').toLowerCase();
+  return !!(ADMINS[u] && passwordMatches(u, key));
 }
 
 // ── Sheet column indexes (0-based) ───────────────────────────
@@ -79,10 +96,6 @@ function doGet(e) {
   const key    = e.parameter.key;
   const cb     = e.parameter.callback || null; // JSONP callback
 
-  if (action === 'codes') {
-    return serveCodes(cb);
-  }
-
   // Tracking actions — open endpoints (no admin key)
   if (action === 'validate')   return validateCode(e.parameter, cb);
   if (action === 'adminLogin') return adminLogin(e.parameter, cb);
@@ -94,6 +107,11 @@ function doGet(e) {
   const user = (e.parameter.user || '').toLowerCase();
   if (!isAdmin(user, key)) return respond({ error: 'unauthorized' }, cb);
 
+  // `codes` dumps every active access code with its label. It sat above the
+  // admin check and was served to anyone who had the /exec URL. Nothing in
+  // index.html or admin.html calls it - the front end uses `validate`, which
+  // takes one code and answers yes/no behind a brute-force guard.
+  if (action === 'codes')         return serveCodes(cb);
   if (action === 'analytics')     return serveAnalytics(cb);
   if (action === 'addCode')       return addCode(e.parameter, cb);
   if (action === 'toggleCode')    return toggleCode(e.parameter, cb);
@@ -147,7 +165,7 @@ function adminLogin(p, cb) {
     .filter(r => String(r[0]) === 'adm_' + ip && r[1] && new Date(r[1]) >= cutoff);
   if (failRows.length >= 5) return respond({ ok: false, blocked: true }, cb);
   const admin = ADMINS[user];
-  if (admin && admin.password === String(p.key || '')) {
+  if (admin && passwordMatches(user, p.key)) {
     return respond({ ok: true, username: user, canGrantEdit: admin.canGrantEdit }, cb);
   }
   failSheet.appendRow(['adm_' + ip, new Date(), '']);
