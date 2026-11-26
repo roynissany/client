@@ -81,19 +81,22 @@
   /* ── CODES TABLE ── */
   .codes-table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
   .codes-table thead tr { border-bottom:1px solid var(--line-strong); }
-  .codes-table th { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); padding:11px 16px; text-align:left; }
+  .codes-table th { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:11px 10px; text-align:left; white-space:nowrap; }
   .codes-table tbody tr { border-bottom:1px solid var(--line); transition:background .1s; }
   .codes-table tbody tr:last-child { border-bottom:none; }
   .codes-table tbody tr:hover { background:rgba(255,255,255,.02); }
-  .codes-table td { padding:13px 16px; font-size:13px; }
+  .codes-table td { padding:13px 10px; font-size:13px; }
+  .codes-table th:last-child, .codes-table td:last-child { width:1%; white-space:nowrap; padding-right:14px; }
+  .codes-table td.td-label { max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .codes-table td.td-admin { white-space:nowrap; text-transform:capitalize; }
   .code-pill { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; background:rgba(67,126,209,.12); color:#8dbde8; padding:3px 10px; border-radius:6px; letter-spacing:.06em; }
   .badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; letter-spacing:.06em; text-transform:uppercase; }
   .badge.active { background:rgba(62,207,142,.12); color:var(--green); }
   .badge.inactive { background:rgba(255,255,255,.06); color:var(--muted); }
   .badge.edit-yes { background:rgba(201,168,76,.1); color:var(--gold); }
   .badge.edit-no { background:rgba(255,255,255,.04); color:rgba(255,255,255,.25); }
-  .row-actions { display:flex; gap:8px; }
-  .row-btn { padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--muted); transition:all .15s; letter-spacing:.06em; text-transform:uppercase; }
+  .row-actions { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; }
+  .row-btn { flex:0 0 auto; white-space:nowrap; padding:5px 10px; font-size:11px; font-weight:600; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--muted); transition:all .15s; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
   .row-btn:hover { color:var(--text); border-color:var(--line-strong); }
   .row-btn.danger:hover { color:var(--red); border-color:var(--red); }
   .row-btn.copied { color:var(--accent); border-color:var(--accent); }
@@ -519,17 +522,17 @@
             <span class="code-pill">${esc(c.code)}</span>
             <span class="drill-toggle" id="dt-${CSS.escape(c.code)}">▶</span>
           </td>
-          <td>${esc(c.label) || '<span style="color:var(--muted)">—</span>'}</td>
+          <td class="td-label" title="${esc(c.label)}">${esc(c.label) || '<span style="color:var(--muted)">—</span>'}</td>
           <td><span class="badge ${c.edit ? 'edit-yes' : 'edit-no'}">${c.edit ? 'Yes' : 'No'}</span></td>
           <td><span class="badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Active' : 'Inactive'}</span></td>
           <td><span class="use-count">${c.useCount || 0}</span></td>
           <td><span class="last-used">${fmtDate(c.lastUsed)}</span></td>
-          <td style="font-size:12px;color:var(--muted)">${esc(c.createdBy || '—')}</td>
+          <td class="td-admin" style="font-size:12px;color:var(--muted)">${esc(c.createdBy || '—')}</td>
           <td>
             <div class="row-actions">
               <button class="row-btn" onclick="copyCodeLink(this,'${esc(c.code)}')" title="Copy hub link with this code pre-filled">Link</button>
               <button class="row-btn" onclick="copyCodeValue(this,'${esc(c.code)}')" title="Copy the code on its own">Code</button>
-              <button class="row-btn toggle" onclick="toggleCode('${esc(c.code)}')">${c.active ? 'Deactivate' : 'Activate'}</button>
+              <button class="row-btn act-toggle" onclick="toggleCode('${esc(c.code)}')">${c.active ? 'Deactivate' : 'Activate'}</button>
               <button class="row-btn danger" onclick="deleteCode('${esc(c.code)}')">Delete</button>
             </div>
           </td>
@@ -788,7 +791,7 @@
   function toggleCode(code) {
     const row = document.getElementById('row-' + CSS.escape(code));
     const badge = row && row.querySelector('.badge.active, .badge.inactive');
-    const btn   = row && row.querySelector('.row-btn.toggle');
+    const btn   = row && row.querySelector('.row-btn.act-toggle');
     const isActive = badge && badge.classList.contains('active');
     // Optimistic update
     if (badge) { badge.textContent = isActive ? 'Inactive' : 'Active'; badge.className = 'badge ' + (isActive ? 'inactive' : 'active'); }
