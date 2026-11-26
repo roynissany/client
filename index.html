@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Balaton Park - Client Login</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0a0a0c;
@@ -234,6 +234,197 @@
   .gallery-btn:hover { background:var(--accent); }
   .gallery-prev { left:-22px; }
   .gallery-next { right:-22px; }
+  /* ─── SECTION TILES (same component as the Events hub) ─── */
+  .tiles {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(14px, 1.6vw, 24px);
+    width: 100%;
+  }
+  .tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    max-height: 40vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    text-align: left;
+    padding: clamp(16px, 1.9vw, 28px);
+    text-decoration: none;
+    color: #f5f7fb;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 4px;
+    background: rgba(10, 20, 34, 0.42);
+    backdrop-filter: blur(9px) saturate(1.1);
+    -webkit-backdrop-filter: blur(9px) saturate(1.1);
+    overflow: hidden;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color .35s ease, background .35s ease, transform .35s cubic-bezier(.22,.8,.3,1), box-shadow .35s ease;
+  }
+  .tile::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 2px;
+    background: #427ab7;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .45s cubic-bezier(.22,.8,.3,1);
+  }
+  .tile:hover, .tile:focus-visible {
+    background: rgba(18, 32, 54, 0.60);
+    border-color: rgba(168, 206, 240, 0.45);
+    transform: translateY(-6px);
+    box-shadow: 0 24px 60px rgba(0,0,0,.45), 0 0 0 1px rgba(66,122,183,0.45);
+    outline: none;
+  }
+  .tile:hover::before, .tile:focus-visible::before { transform: scaleX(1); }
+  .tile .num {
+    position: absolute;
+    top: clamp(14px, 1.8vw, 24px);
+    left: clamp(16px, 1.9vw, 28px);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: rgba(168, 206, 240, 0.75);
+  }
+  .tile h2 {
+    margin: 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: clamp(24px, 2.6vw, 40px);
+    line-height: 0.95;
+    letter-spacing: 0.005em;
+    color: #f5f7fb;
+  }
+  .tile p {
+    margin: 9px 0 0;
+    font-size: clamp(12.5px, 0.95vw, 14.5px);
+    line-height: 1.5;
+    color: rgba(245, 247, 251, 0.72);
+    font-weight: 300;
+    max-width: 24ch;
+  }
+  .tile .go {
+    margin-top: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #a8cef0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tile .go span { transition: transform .35s cubic-bezier(.22,.8,.3,1); }
+  .tile:hover .go span { transform: translateX(6px); }
+  /* ─── PRIVATE MODAL (same component as the Events hub) ─── */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(5, 11, 19, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease, visibility .3s ease;
+  }
+  .modal.open { opacity: 1; visibility: visible; }
+  .modal-card {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    background: linear-gradient(180deg, rgba(18,32,54,.97) 0%, rgba(10,20,34,.98) 100%);
+    border: 1px solid rgba(168, 206, 240, 0.28);
+    border-radius: 6px;
+    padding: clamp(32px, 4vw, 48px);
+    text-align: left;
+    box-shadow: 0 40px 100px rgba(0,0,0,.6);
+    transform: translateY(16px) scale(.98);
+    transition: transform .35s cubic-bezier(.22,.8,.3,1);
+  }
+  .modal.open .modal-card { transform: translateY(0) scale(1); }
+  .modal-card h3 {
+    margin: 0 0 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: clamp(30px, 3.4vw, 44px);
+    line-height: 0.98;
+    color: #f5f7fb;
+  }
+  .modal-card p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(245, 247, 251, 0.72);
+    font-weight: 300;
+  }
+  .modal-card .tile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 26px;
+    padding: 14px 26px;
+    background: #427ab7;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: background .25s ease, transform .25s ease, box-shadow .25s ease;
+  }
+  .modal-card .tile-btn:hover {
+    background: #5a92cf;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px rgba(66,122,183,0.45);
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    width: 38px; height: 38px;
+    background: none;
+    border: 0;
+    color: rgba(245, 247, 251, 0.72);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: color .2s ease, background .2s ease;
+  }
+  .modal-close:hover { color: #f5f7fb; background: rgba(255,255,255,.08); }
+  @media (max-width: 1080px) {
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tile { max-height: 30vh; }
+  }
+  @media (max-width: 640px) {
+    .tiles { grid-template-columns: 1fr; gap: 12px; margin-top: 28px; }
+    .tile {
+      aspect-ratio: auto;
+      max-height: none;
+      min-height: 104px;
+      justify-content: center;
+      padding: 18px 20px 16px 22px;
+    }
+    .tile .num { top: 13px; left: 22px; }
+    .tile h2 { font-size: 26px; margin-top: 11px; }
+    .tile p { margin-top: 6px; font-size: 13px; max-width: none; }
+    .tile .go { margin-top: 10px; }
+  }
   /* Track layouts */
   .layouts-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:0; }
   .layout-card { background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;text-align:center; }
@@ -388,6 +579,37 @@
       <img src="grandstand-strip.jpg" alt="Grandstand" style="object-position:center 50%;">
       <div class="img-strip-overlay"></div>
     </div>
+
+    <!-- SECTION TILES -->
+    <nav class="tiles reveal">
+      <a class="tile" href="https://mice.balatonpark.com" target="_blank" rel="noopener">
+        <div class="num">01</div>
+        <h2>MICE</h2>
+        <p>Conferences, incentives, team days and gala dinners.</p>
+        <div class="go">Enter <span>&rarr;</span></div>
+      </a>
+
+      <a class="tile" href="https://brands.balatonpark.com" target="_blank" rel="noopener">
+        <div class="num">02</div>
+        <h2>Car<br>Brands</h2>
+        <p>Launches, driving programmes, expos and test days.</p>
+        <div class="go">Enter <span>&rarr;</span></div>
+      </a>
+
+      <a class="tile" href="https://intro.balatonpark.com" target="_blank" rel="noopener">
+        <div class="num">03</div>
+        <h2>Racing<br>Series</h2>
+        <p>The circuit, the facilities and the race weekend spec.</p>
+        <div class="go">Enter <span>&rarr;</span></div>
+      </a>
+
+      <button class="tile" type="button" id="privateTile" aria-haspopup="dialog">
+        <div class="num">04</div>
+        <h2>Private</h2>
+        <p>Your event of any kind, small or large.</p>
+        <div class="go">Open <span>&rarr;</span></div>
+      </button>
+    </nav>
 
     <!-- TRACK LAYOUTS -->
     <div class="section-header reveal">
@@ -979,4 +1201,31 @@
       setTimeout(() => btn.textContent = 'Copy full HTML to save', 2500);
     }).catch(() => alert('Copy failed — use view-source instead.'));
   }
+</script>
+
+<div class="modal" id="privateModal" role="dialog" aria-modal="true" aria-labelledby="privateTitle">
+  <div class="modal-card">
+    <button class="modal-close" type="button" id="privateClose" aria-label="Close">&times;</button>
+    <h3 id="privateTitle">Private Events</h3>
+    <p>Your event, small or large, built around you. Tell us what you have in mind and we will shape the circuit, the paddock and the hotel around it.</p>
+    <a class="tile-btn" href="mailto:info@balatonparkcircuit.com?subject=Private%20event%20at%20Balaton%20Park">Contact Us <span>&rarr;</span></a>
+  </div>
+</div>
+<script>
+(function () {
+  var modal = document.getElementById('privateModal');
+  var open  = document.getElementById('privateTile');
+  var close = document.getElementById('privateClose');
+  if (!modal || !open || !close) return;
+
+  function show() { modal.classList.add('open'); close.focus(); }
+  function hide() { modal.classList.remove('open'); open.focus(); }
+
+  open.addEventListener('click', show);
+  close.addEventListener('click', hide);
+  modal.addEventListener('click', function (e) { if (e.target === modal) hide(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modal.classList.contains('open')) hide();
+  });
+})();
 </script>
