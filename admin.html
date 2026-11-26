@@ -81,27 +81,27 @@
   /* ── CODES TABLE ── */
   .codes-table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
   .codes-table thead tr { border-bottom:1px solid var(--line-strong); }
-  .codes-table th { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:11px 10px; text-align:left; white-space:nowrap; }
+  .codes-table th { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:11px 8px; text-align:left; white-space:nowrap; }
   .codes-table tbody tr { border-bottom:1px solid var(--line); transition:background .1s; }
   .codes-table tbody tr:last-child { border-bottom:none; }
   .codes-table tbody tr:hover { background:rgba(255,255,255,.02); }
-  .codes-table td { padding:13px 10px; font-size:13px; }
+  .codes-table td { padding:13px 8px; font-size:13px; }
   .codes-table th:last-child, .codes-table td:last-child { width:1%; white-space:nowrap; padding-right:14px; }
-  .codes-table td.td-label { max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .codes-table td.td-label { max-width:104px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .codes-table td.td-admin { white-space:nowrap; text-transform:capitalize; }
-  .code-pill { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; background:rgba(67,126,209,.12); color:#8dbde8; padding:3px 10px; border-radius:6px; letter-spacing:.06em; }
+  .code-pill { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; background:rgba(67,126,209,.12); color:#8dbde8; padding:3px 8px; border-radius:6px; letter-spacing:.04em; }
   .badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; letter-spacing:.06em; text-transform:uppercase; }
   .badge.active { background:rgba(62,207,142,.12); color:var(--green); }
   .badge.inactive { background:rgba(255,255,255,.06); color:var(--muted); }
   .badge.edit-yes { background:rgba(201,168,76,.1); color:var(--gold); }
   .badge.edit-no { background:rgba(255,255,255,.04); color:rgba(255,255,255,.25); }
-  .row-actions { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; }
-  .row-btn { flex:0 0 auto; white-space:nowrap; padding:5px 10px; font-size:11px; font-weight:600; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--muted); transition:all .15s; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
+  .row-actions { display:flex; gap:4px; flex-wrap:nowrap; justify-content:flex-end; }
+  .row-btn { flex:0 0 auto; min-width:88px; white-space:nowrap; text-align:center; padding:5px 6px; font-size:10px; font-weight:600; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--muted); transition:all .15s; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; }
   .row-btn:hover { color:var(--text); border-color:var(--line-strong); }
   .row-btn.danger:hover { color:var(--red); border-color:var(--red); }
   .row-btn.copied { color:var(--accent); border-color:var(--accent); }
   .use-count { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; }
-  .last-used { font-size:12px; color:var(--muted); }
+  .last-used { font-size:11px; color:var(--muted); white-space:nowrap; }
 
   /* ── CHECKBOX ── */
   .row-check { width:15px; height:15px; cursor:pointer; accent-color:var(--accent); flex-shrink:0; }
@@ -119,6 +119,7 @@
 
   /* ── CODE DRILL-DOWN ── */
   .drill-toggle { font-size:9px; color:var(--muted); margin-left:8px; user-select:none; display:inline-block; transition:transform .2s; }
+  .codes-table td.code-name-cell { white-space:nowrap; }
   .code-name-cell { cursor:pointer; }
   .code-name-cell:hover .code-pill { background:rgba(67,126,209,.22); }
   .code-drill { display:none; }
