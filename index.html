@@ -236,7 +236,7 @@
   .gallery-next { right:-22px; }
   /* ─── SECTION TILES (same component as the Events hub) ─── */
   .tiles {
-    margin-top: 40px;
+    margin-top: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: clamp(14px, 1.6vw, 24px);
@@ -412,7 +412,7 @@
     .tile { max-height: 30vh; }
   }
   @media (max-width: 640px) {
-    .tiles { grid-template-columns: 1fr; gap: 12px; margin-top: 28px; }
+    .tiles { grid-template-columns: 1fr; gap: 12px; margin-top: 0; }
     .tile {
       aspect-ratio: auto;
       max-height: none;
@@ -581,6 +581,9 @@
     </div>
 
     <!-- SECTION TILES -->
+    <div class="section-header reveal">
+      <h2 data-edit>SEE WHAT WE CAN DO.</h2>
+    </div>
     <nav class="tiles reveal">
       <a class="tile" href="https://mice.balatonpark.com" target="_blank" rel="noopener">
         <div class="num">01</div>
@@ -1208,7 +1211,7 @@
     <button class="modal-close" type="button" id="privateClose" aria-label="Close">&times;</button>
     <h3 id="privateTitle">Private Events</h3>
     <p>Your event, small or large, built around you. Tell us what you have in mind and we will shape the circuit, the paddock and the hotel around it.</p>
-    <a class="tile-btn" href="mailto:info@balatonparkcircuit.com?subject=Private%20event%20at%20Balaton%20Park">Contact Us <span>&rarr;</span></a>
+    <a class="tile-btn" href="https://www.balatonparkcircuit.com/qrf" target="_blank" rel="noopener">Request Quote <span>&rarr;</span></a>
   </div>
 </div>
 <script>
